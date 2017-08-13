@@ -1,9 +1,10 @@
 module Main where
 
 import Lib
-import Data.Array
-import Data.Map
-import Data.List
+import Data.Array as A
+import Data.Map as M
+import Data.Set as S
+import Data.List as L
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Graph 
 import Data.Graph.Inductive.Query.SP
@@ -12,6 +13,7 @@ data BlockColor = Red | Green | Blue | Yellow | Black deriving (Ord, Eq, Ix)
 
 type BlockPosition = Array BlockColor Node
 
+data PointsOfBlock = PointsOfBlock (Set Node)
 data BlockNodes = BlockNodes [LNode BlockColor]
 data BlockUnDirectedEdges = BlockUnDirectedEdges [LEdge Int]
 data BlockDirectedEdges = BlockDirectedEdges [LEdge Int]
@@ -20,7 +22,7 @@ node_color_list :: [(Node, BlockColor)]
 node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow)]
 
 node_color_map :: Map Node BlockColor
-node_color_map = fromList node_color_list
+node_color_map = M.fromList node_color_list
 
 graph_nodes :: BlockNodes
 graph_nodes = BlockNodes node_color_list
@@ -38,27 +40,45 @@ createGraph (BlockNodes nodes) unDirectedEdges =
     mkGraph nodes directedEdges
 
 calcPolygonBlockBonus :: BlockNodes -> BlockPosition -> Int
-calcPolygonBlockBonus bn bp = Data.List.foldl' checkColor 0 colorNodeList
+calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
         where
             colorNodeList :: [(BlockColor, Node)]
-            colorNodeList = Data.Array.assocs bp
+            colorNodeList = A.assocs bp
             checkColor :: Int -> (BlockColor, Node) -> Int
             checkColor cur (color, node) = if color == getNodeColor node then cur + 2 else cur
             getNodeColor :: Node -> BlockColor
-            getNodeColor n = (Data.Map.!) node_color_map n
+            getNodeColor n = (M.!) node_color_map n
             
 
 calcCenterBlockBonus :: BlockNodes -> BlockPosition -> Int
 calcCenterBlockBonus bn bp = 0
 
-calcFigureBonus :: BlockNodes -> BlockPosition -> Int
-calcFigureBonus bn bp = 0
+calcTriangleBonus :: PointsOfBlock -> Int
+calcTriangleBonus = undefined
+
+calcDepressionSquareBonus :: PointsOfBlock -> Int
+calcDepressionSquareBonus = undefined
+
+calcSquareBonus :: PointsOfBlock -> Int
+calcSquareBonus = undefined
+
+calcPentagonBonus :: PointsOfBlock -> Int
+calcPentagonBonus = undefined
+
+calcFigureBonus :: BlockPosition -> Int
+calcFigureBonus bp = 
+    let pointsOfBlock = PointsOfBlock (S.fromList (A.elems bp)) in
+    let triangleBonus = calcTriangleBonus pointsOfBlock in
+    let depressionSquareBonus = calcDepressionSquareBonus pointsOfBlock in
+    let squareBonus = calcSquareBonus pointsOfBlock in
+    let pentagonBonus = calcPentagonBonus pointsOfBlock in
+    triangleBonus + depressionSquareBonus + squareBonus + pentagonBonus
 
 calcBonusPoint :: BlockNodes -> BlockPosition -> Int
 calcBonusPoint bn bp = 
     let polygonBlockBonus = calcPolygonBlockBonus bn bp in
     let centerBlockBonus = calcCenterBlockBonus bn bp in
-    let figureBonus = calcFigureBonus bn bp in
+    let figureBonus = calcFigureBonus bp in
     polygonBlockBonus + centerBlockBonus + figureBonus
 
 main :: IO ()
