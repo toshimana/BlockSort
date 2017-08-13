@@ -53,21 +53,34 @@ calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
 calcCenterBlockBonus :: BlockNodes -> BlockPosition -> Int
 calcCenterBlockBonus bn bp = 0
 
+calcFigureBonusImpl ::Int -> [Set Node] -> PointsOfBlock -> Int
+calcFigureBonusImpl bonus target (PointsOfBlock pob) =
+    L.foldl' (\cur -> \elt -> if isSubsetOf elt pob then cur+bonus else cur) 0 target
+
+
 triangles :: [Set Node]
 triangles = L.map S.fromList [[1,2,5],[1,5,10],[2,3,6],[3,4,7],[4,7,11],[8,12,13],[9,14,15]]
 
 calcTriangleBonus :: PointsOfBlock -> Int
-calcTriangleBonus (PointsOfBlock pob) = 
-    L.foldl' (\cur -> \elt -> if isSubsetOf elt pob then cur+5 else cur) 0 triangles
+calcTriangleBonus = calcFigureBonusImpl 5 triangles
+
+depressionSquare :: [Set Node]
+depressionSquare = L.map S.fromList [[1,2,5,10],[3,4,7,11]]
 
 calcDepressionSquareBonus :: PointsOfBlock -> Int
-calcDepressionSquareBonus = undefined
+calcDepressionSquareBonus = calcFigureBonusImpl 2 depressionSquare
+
+square :: [Set Node]
+square = L.map S.fromList [[2,5,6,8],[3,6,7,9],[5,8,10,12],[7,9,11,15]]
 
 calcSquareBonus :: PointsOfBlock -> Int
-calcSquareBonus = undefined
+calcSquareBonus = calcFigureBonusImpl 8 square
+
+pentagon :: [Set Node]
+pentagon = L.map S.fromList [[6,8,9,13,14]]
 
 calcPentagonBonus :: PointsOfBlock -> Int
-calcPentagonBonus = undefined
+calcPentagonBonus = calcFigureBonusImpl 15 pentagon
 
 calcFigureBonus :: BlockPosition -> Int
 calcFigureBonus bp = 
