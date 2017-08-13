@@ -53,8 +53,12 @@ calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
 calcCenterBlockBonus :: BlockNodes -> BlockPosition -> Int
 calcCenterBlockBonus bn bp = 0
 
+triangles :: [Set Node]
+triangles = L.map S.fromList [[1,2,5],[1,5,10],[2,3,6],[3,4,7],[4,7,11],[8,12,13],[9,14,15]]
+
 calcTriangleBonus :: PointsOfBlock -> Int
-calcTriangleBonus = undefined
+calcTriangleBonus (PointsOfBlock pob) = 
+    L.foldl' (\cur -> \elt -> if isSubsetOf elt pob then cur+5 else cur) 0 triangles
 
 calcDepressionSquareBonus :: PointsOfBlock -> Int
 calcDepressionSquareBonus = undefined
