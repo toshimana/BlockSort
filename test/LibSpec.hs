@@ -1,4 +1,4 @@
-module LibSpec where
+module LibSpec (spec) where
 
 import Test.Hspec
 import Data.Array
@@ -20,5 +20,5 @@ spec = do
             solve graph_nodes graph_edges bns [] (StartPoint 14) (EndPoint 11) `shouldBe` []
 
         it "sample03" $ do
-            let bns = array (Red,Red) [(Red,1)]
-            solve graph_nodes graph_edges bns [(Red,1)] (StartPoint 10) (EndPoint 11) `shouldBe` []
+            let bns = array (Red,Red) [(Red,2)]
+            solve graph_nodes graph_edges bns [(Red,2)] (StartPoint 10) (EndPoint 11) `shouldBe` []

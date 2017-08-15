@@ -15,6 +15,7 @@ import StartPoint
 import EndPoint
 
 type BlockPosition = Array BlockColor Node
+type BlockGraph = Gr BlockColor Float
 
 data PointsOfBlock = PointsOfBlock (Set Node)
 data FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
@@ -36,7 +37,7 @@ convertDirectedEdges :: FloorUnDirectedEdges -> FloorDirectedEdges
 convertDirectedEdges (FloorUnDirectedEdges edges) =
     FloorDirectedEdges $ concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
 
-createGraph :: FloorNodes -> FloorUnDirectedEdges -> Gr BlockColor Float
+createGraph :: FloorNodes -> FloorUnDirectedEdges -> BlockGraph
 createGraph (FloorNodes nodes) unDirectedEdges = 
     let (FloorDirectedEdges directedEdges) = convertDirectedEdges unDirectedEdges in
     mkGraph nodes directedEdges
@@ -108,7 +109,7 @@ cuttingNodes :: FloorNodes -> PointsOfBlock -> FloorNodes
 cuttingNodes (FloorNodes fn) (PointsOfBlock poe) =
     FloorNodes $ L.filter (\(n,_) -> not (S.member n poe)) fn
 
-searchShortPath :: StartPoint -> EndPoint -> Gr BlockColor Float -> [Node]
+searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> [Node]
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g = sp startPoint endPoint g
 
 gotoend :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
@@ -133,17 +134,19 @@ processBlock fn ude bp cl bc bcn startPoint endPoint =
     else
         let noblock_nodes = cuttingNodes fn poe in
         let target_nodes = getColorNode noblock_nodes bc in
-        L.concatMap (\e -> B.mapMaybe (searchReturnRoot g departRoot e) (f e) ) target_nodes
+        L.concatMap (searchRoundRoot g departRoot) target_nodes
         where
-            f :: Node -> [([Node],BlockPosition)]
-            f e = solve fn ude (bp // [(bc,e)]) cl (StartPoint e) endPoint
-            searchReturnRoot :: Gr BlockColor Float -> [Node] -> Node -> ([Node], BlockPosition) -> Maybe ([Node], BlockPosition)
-            searchReturnRoot g departRoot e (path, newbp) =
-                if L.null path then Nothing
-                else
-                    let returnRoot = searchShortPath (StartPoint bcn) (EndPoint e) g in
-                    if L.null returnRoot then Nothing
-                    else Just (departRoot ++ returnRoot ++ path, newbp)
+            f :: Node -> Node -> [([Node],BlockPosition)]
+            f e backNode = solve fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
+            searchRoundRoot :: BlockGraph -> [Node] -> Node -> [([Node], BlockPosition)]
+            searchRoundRoot g departRoot e = 
+                let returnRoot = searchShortPath (StartPoint bcn) (EndPoint e) g in
+                if L.null returnRoot then []
+                else 
+                    let moveRoot = departRoot ++ returnRoot in
+                    let backNode = last (init moveRoot) in
+                    let currentRoot = moveRoot ++ [backNode] in
+                    B.mapMaybe (\(path,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, newbp)) (f e backNode)
 
 solve :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
 solve fn ude bp [] startPoint endPoint = gotoend fn ude bp startPoint endPoint
