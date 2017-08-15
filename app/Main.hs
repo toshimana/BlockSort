@@ -118,14 +118,20 @@ gotoend fn ude bp startPoint endPoint =
     let g = createGraph fn noblock_ude in
     [(searchShortPath startPoint endPoint g, bp)]
 
+getColorNode :: FloorNodes -> BlockColor -> [Node]
+getColorNode (FloorNodes fn) Black = L.map (\(e,_) -> e) fn
+getColorNode (FloorNodes fn) color = 
+    L.foldl' (\cur -> \(e,c) -> if c == color then e:cur else cur) [] fn
+
 processBlock :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
 processBlock fn ude bp cl bc bcn startPoint endPoint = 
     let poe = PointsOfBlock $ S.fromList (L.delete bcn (A.elems bp)) in
     let noblock_ude = cuttingEdge ude poe in
     let g = createGraph fn noblock_ude in
     let departRoot = searchShortPath startPoint (EndPoint bcn) g in
-    let FloorNodes noblock_nodes = cuttingNodes fn poe in
-    L.concatMap (\(e,_) -> L.map (\(path,newbp) -> (departRoot ++ (searchShortPath (StartPoint bcn) (EndPoint e) g) ++ path, newbp) ) (f e) ) noblock_nodes
+    let noblock_nodes = cuttingNodes fn poe in
+    let target_nodes = getColorNode noblock_nodes bc in
+    L.concatMap (\e -> L.map (\(path,newbp) -> (departRoot ++ (searchShortPath (StartPoint bcn) (EndPoint e) g) ++ path, newbp) ) (f e) ) target_nodes
       where
         f e = solve fn ude (bp // [(bc,e)]) cl (StartPoint e) endPoint
 
@@ -143,4 +149,4 @@ main :: IO ()
 main = do
     let bns = array (Red, Black) [(Red,1),(Green,2),(Blue,3),(Yellow,4),(Black,5)]
     let roots = calcOptimizedRoot graph_nodes graph_edges bns (StartPoint 10) (EndPoint 11)
-    print $ L.take 10 (L.sort (L.map (\(n,bp) -> (calcBonusPoint graph_nodes bp,n,bp) ) roots) )
+    print $ L.take 10 $ L.reverse $ L.sort (L.map (\(n,bp) -> (calcBonusPoint graph_nodes bp,n,bp) ) roots)
