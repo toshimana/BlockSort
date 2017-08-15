@@ -1,4 +1,4 @@
-module Lib (graph_nodes, graph_edges, calcBonusPoint, solve, calcOptimizedRoot) where
+module Lib (BlockPosition, graph_nodes, graph_edges, calcBonusPoint, solve, calcOptimizedRoot) where
 
 import Data.Array as A
 import Data.Map as M
@@ -109,51 +109,55 @@ cuttingNodes :: FloorNodes -> PointsOfBlock -> FloorNodes
 cuttingNodes (FloorNodes fn) (PointsOfBlock poe) =
     FloorNodes $ L.filter (\(n,_) -> not (S.member n poe)) fn
 
-searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> [Node]
-searchShortPath (StartPoint startPoint) (EndPoint endPoint) g = sp startPoint endPoint g
+searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> (Path, Float)
+searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
+    (sp startPoint endPoint g, spLength startPoint endPoint g)
 
-gotoend :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
+gotoend :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 gotoend fn ude bp startPoint endPoint = 
     let poe = PointsOfBlock $ S.fromList (A.elems bp) in
     let noblock_ude = cuttingEdge ude poe in
     let g = createGraph fn noblock_ude in
-    [(searchShortPath startPoint endPoint g, bp)]
+    let (path, distance) = searchShortPath startPoint endPoint g in
+    [(path, distance, bp)]
 
 getColorNode :: FloorNodes -> BlockColor -> [Node]
 getColorNode (FloorNodes fn) Black = L.map (\(e,_) -> e) fn
 getColorNode (FloorNodes fn) color = 
     L.foldl' (\cur -> \(e,c) -> if c == color then e:cur else cur) [] fn
 
-processBlock :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
+processBlock :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 processBlock fn ude bp cl bc bcn startPoint endPoint = 
     let poe = PointsOfBlock $ S.fromList (L.delete bcn (A.elems bp)) in
     let noblock_ude = cuttingEdge ude poe in
     let g = createGraph fn noblock_ude in
-    let departRoot = searchShortPath startPoint (EndPoint bcn) g in
+    let (departRoot, departDistance) = searchShortPath startPoint (EndPoint bcn) g in
     if L.null departRoot then []
     else
         let noblock_nodes = cuttingNodes fn poe in
         let target_nodes = getColorNode noblock_nodes bc in
-        L.concatMap (searchRoundRoot g departRoot) target_nodes
+        L.concatMap (searchRoundRoot g departRoot departDistance) target_nodes
         where
-            f :: Node -> Node -> [([Node],BlockPosition)]
+            f :: Node -> Node -> [(Path,Float,BlockPosition)]
             f e backNode = solve fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
-            searchRoundRoot :: BlockGraph -> [Node] -> Node -> [([Node], BlockPosition)]
-            searchRoundRoot g departRoot e = 
-                let returnRoot = searchShortPath (StartPoint bcn) (EndPoint e) g in
+            searchRoundRoot :: BlockGraph -> [Node] -> Float -> Node -> [(Path,Float,BlockPosition)]
+            searchRoundRoot g departRoot departDistance e = 
+                let (returnRoot, returnDistance) = searchShortPath (StartPoint bcn) (EndPoint e) g in
                 if L.null returnRoot then []
                 else 
                     let moveRoot = departRoot ++ returnRoot in
+                    let moveDistance = departDistance + returnDistance in
                     let backNode = last (init moveRoot) in
                     let currentRoot = moveRoot ++ [backNode] in
-                    B.mapMaybe (\(path,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, newbp)) (f e backNode)
+                    let currentDistance = moveDistance + (spLength e backNode g) in
+                    B.mapMaybe (\(path,distance,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentDistance + distance, newbp)) (f e backNode)
 
-solve :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
+solve :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 solve fn ude bp [] startPoint endPoint = gotoend fn ude bp startPoint endPoint
 solve fn ude bp unprocessBlocks startPoint endPoint = 
     concatMap (\p@(color,node) -> processBlock fn ude bp (L.delete p unprocessBlocks) color node startPoint endPoint) unprocessBlocks
 
-calcOptimizedRoot :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
+calcOptimizedRoot :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 calcOptimizedRoot fn ude bp startPoint endPoint = 
     let bplist = A.assocs bp in
     solve fn ude bp bplist startPoint endPoint
