@@ -1,4 +1,4 @@
-module Lib (graph_nodes, graph_edges, calcBonusPoint, calcOptimizedRoot) where
+module Lib (graph_nodes, graph_edges, calcBonusPoint, solve, calcOptimizedRoot) where
 
 import Data.Array as A
 import Data.Map as M
@@ -16,8 +16,8 @@ import EndPoint
 type BlockPosition = Array BlockColor Node
 
 data PointsOfBlock = PointsOfBlock (Set Node)
-data FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Int]
-data FloorDirectedEdges = FloorDirectedEdges [LEdge Int]
+data FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
+data FloorDirectedEdges = FloorDirectedEdges [LEdge Float]
 
 node_color_list :: [(Node, BlockColor)]
 node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow)]
@@ -29,13 +29,13 @@ graph_nodes :: FloorNodes
 graph_nodes = FloorNodes node_color_list
 
 graph_edges :: FloorUnDirectedEdges
-graph_edges = FloorUnDirectedEdges [(1,2,1),(1,5,1),(1,10,1),(2,1,1),(2,3,1),(2,5,1),(2,6,1),(3,4,1),(3,6,1),(3,7,1),(4,7,1),(4,11,1),(5,8,1),(5,10,1),(6,8,1),(6,9,1),(7,9,1),(7,11,1),(10,12,1),(11,15,1),(12,13,1),(13,14,1),(14,15,1)]
+graph_edges = FloorUnDirectedEdges [(1,2,77.942),(1,5,45.0),(1,10,63.64),(2,3,77.942),(2,5,45.0),(2,6,45.0),(3,4,77.942),(3,6,45.0),(3,7,45.0),(4,7,45.0),(4,11,63.64),(5,8,45.0),(5,10,45.0),(6,8,45.0),(6,9,45.0),(7,9,45.0),(7,11,45.0),(8,12,45.0),(8,13,45.0),(9,14,45.0),(9,15,45.0),(10,12,45.0),(11,15,45.0),(12,13,45.0),(13,14,32.942),(14,15,45.0)]
 
 convertDirectedEdges :: FloorUnDirectedEdges -> FloorDirectedEdges
 convertDirectedEdges (FloorUnDirectedEdges edges) =
     FloorDirectedEdges $ concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
 
-createGraph :: FloorNodes -> FloorUnDirectedEdges -> Gr BlockColor Int
+createGraph :: FloorNodes -> FloorUnDirectedEdges -> Gr BlockColor Float
 createGraph (FloorNodes nodes) unDirectedEdges = 
     let (FloorDirectedEdges directedEdges) = convertDirectedEdges unDirectedEdges in
     mkGraph nodes directedEdges
@@ -107,7 +107,7 @@ cuttingNodes :: FloorNodes -> PointsOfBlock -> FloorNodes
 cuttingNodes (FloorNodes fn) (PointsOfBlock poe) =
     FloorNodes $ L.filter (\(n,_) -> not (S.member n poe)) fn
 
-searchShortPath :: StartPoint -> EndPoint -> Gr BlockColor Int -> [Node]
+searchShortPath :: StartPoint -> EndPoint -> Gr BlockColor Float -> [Node]
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g = sp startPoint endPoint g
 
 gotoend :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
