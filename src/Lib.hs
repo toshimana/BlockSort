@@ -4,6 +4,7 @@ import Data.Array as A
 import Data.Map as M
 import Data.Set as S
 import Data.List as L
+import Data.Maybe as B
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Query.SP
@@ -128,11 +129,21 @@ processBlock fn ude bp cl bc bcn startPoint endPoint =
     let noblock_ude = cuttingEdge ude poe in
     let g = createGraph fn noblock_ude in
     let departRoot = searchShortPath startPoint (EndPoint bcn) g in
-    let noblock_nodes = cuttingNodes fn poe in
-    let target_nodes = getColorNode noblock_nodes bc in
-    L.concatMap (\e -> L.map (\(path,newbp) -> (departRoot ++ (searchShortPath (StartPoint bcn) (EndPoint e) g) ++ path, newbp) ) (f e) ) target_nodes
-      where
-        f e = solve fn ude (bp // [(bc,e)]) cl (StartPoint e) endPoint
+    if L.null departRoot then []
+    else
+        let noblock_nodes = cuttingNodes fn poe in
+        let target_nodes = getColorNode noblock_nodes bc in
+        L.concatMap (\e -> B.mapMaybe (searchReturnRoot g departRoot e) (f e) ) target_nodes
+        where
+            f :: Node -> [([Node],BlockPosition)]
+            f e = solve fn ude (bp // [(bc,e)]) cl (StartPoint e) endPoint
+            searchReturnRoot :: Gr BlockColor Float -> [Node] -> Node -> ([Node], BlockPosition) -> Maybe ([Node], BlockPosition)
+            searchReturnRoot g departRoot e (path, newbp) =
+                if L.null path then Nothing
+                else
+                    let returnRoot = searchShortPath (StartPoint bcn) (EndPoint e) g in
+                    if L.null returnRoot then Nothing
+                    else Just (departRoot ++ returnRoot ++ path, newbp)
 
 solve :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [([Node],BlockPosition)]
 solve fn ude bp [] startPoint endPoint = gotoend fn ude bp startPoint endPoint
