@@ -22,4 +22,5 @@ main :: IO ()
 main = do
     let bns = array (Red, Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,5)]
     let roots = calcOptimizedRoot graph_nodes graph_edges bns (StartPoint 10) (EndPoint 11)
-    print $ take 10 $ sortBy compareResult (map (\(n,d,bp) -> (calcBonusPoint graph_nodes bp,d,n,bp) ) roots)
+    let results = sortBy compareResult (map (\(n,d,bp) -> (calcBonusPoint graph_nodes bp,d,n,bp) ) roots)
+    print $ map head $ groupBy (\(a,_,_,_) -> \(b,_,_,_) -> a == b) results
