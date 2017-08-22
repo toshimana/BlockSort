@@ -1,4 +1,4 @@
-module Lib (BlockPosition, graph_nodes, graph_edges, calcBonusPoint, solve, calcOptimizedRoot) where
+module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, calcBonusPoint, solve, calcOptimizedRoot) where
 
 import Data.Array as A
 import Data.Map as M
