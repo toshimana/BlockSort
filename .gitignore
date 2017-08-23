@@ -4,4 +4,5 @@
 *.bak
 *.csv
 *.txt
+*.prof
 .stack-work/
