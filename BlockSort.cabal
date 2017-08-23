@@ -35,6 +35,7 @@ executable BlockSort-exe
                      , containers
                      , array
                      , fgl
+                     , csv
   default-language:    Haskell2010
 
 test-suite BlockSort-test

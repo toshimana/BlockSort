@@ -2,4 +2,6 @@
 *.o
 *.exe
 *.bak
+*.csv
+*.txt
 .stack-work/
