@@ -37,7 +37,7 @@ calcAnyRoot sp ep bp =
     L.map head $ groupBy (\(a,_,_,_) -> \(b,_,_,_) -> a == b) results
 
 dummyArray :: Array Int (Maybe Float)
-dummyArray = array (1,23) [(i,Nothing) | i <- [1..23]]
+dummyArray = array (1,25) [(i,Nothing) | i <- [1..25]]
 
 generateRootCSVLine :: Int -> Int -> BlockPosition -> [String]
 generateRootCSVLine sp ep bp = 
@@ -49,3 +49,4 @@ generateRootCSVLine sp ep bp =
 main :: IO ()
 main = do
     writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine 10 11) blockArray
+--    print $ calcAnyRoot 10 11 $ head blockArray

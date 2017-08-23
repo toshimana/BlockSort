@@ -22,7 +22,7 @@ data FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
 data FloorDirectedEdges = FloorDirectedEdges [LEdge Float]
 
 node_color_list :: [(Node, BlockColor)]
-node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow)]
+node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow), (16,None)]
 
 node_color_map :: Map Node BlockColor
 node_color_map = M.fromList node_color_list
@@ -30,8 +30,20 @@ node_color_map = M.fromList node_color_list
 graph_nodes :: FloorNodes
 graph_nodes = FloorNodes node_color_list
 
+graph_edge_list :: [LEdge Float]
+graph_edge_list = [(1,2,77.942),(1,5,45.0),(1,10,63.64),(2,3,77.942),(2,5,45.0),(2,6,45.0),(3,4,77.942),(3,6,45.0),(3,7,45.0),(4,7,45.0),(4,11,63.64),(5,8,45.0),(5,10,45.0),(6,8,45.0),(6,9,45.0),(7,9,45.0),(7,11,45.0),(8,12,45.0),(8,13,45.0),(9,14,45.0),(9,15,45.0),(10,12,45.0),(11,15,45.0),(12,13,45.0),(13,14,32.942),(14,15,45.0)]
+
+graph_edge_with_center_list :: [LEdge Float]
+graph_edge_with_center_list = [(6,16,45),(8,16,45),(9,16,45),(13,16,45),(14,16,45)]
+
 graph_edges :: FloorUnDirectedEdges
-graph_edges = FloorUnDirectedEdges [(1,2,77.942),(1,5,45.0),(1,10,63.64),(2,3,77.942),(2,5,45.0),(2,6,45.0),(3,4,77.942),(3,6,45.0),(3,7,45.0),(4,7,45.0),(4,11,63.64),(5,8,45.0),(5,10,45.0),(6,8,45.0),(6,9,45.0),(7,9,45.0),(7,11,45.0),(8,12,45.0),(8,13,45.0),(9,14,45.0),(9,15,45.0),(10,12,45.0),(11,15,45.0),(12,13,45.0),(13,14,32.942),(14,15,45.0)]
+graph_edges = FloorUnDirectedEdges graph_edge_list
+
+graph_edges_with_center :: FloorUnDirectedEdges
+graph_edges_with_center = FloorUnDirectedEdges graph_edge_with_center_list
+
+append_graph_edges :: FloorUnDirectedEdges -> FloorUnDirectedEdges -> FloorUnDirectedEdges
+append_graph_edges (FloorUnDirectedEdges l) (FloorUnDirectedEdges r) = FloorUnDirectedEdges (l++r)
 
 convertDirectedEdges :: FloorUnDirectedEdges -> FloorDirectedEdges
 convertDirectedEdges (FloorUnDirectedEdges edges) =
@@ -53,8 +65,8 @@ calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
             getNodeColor n = (M.!) node_color_map n
             
 
-calcCenterBlockBonus :: FloorNodes -> BlockPosition -> Int
-calcCenterBlockBonus bn bp = 0
+calcCenterBlockBonus :: BlockPosition -> Int
+calcCenterBlockBonus bp = if bp A.! Black == 16 then 5 else 0
 
 calcFigureBonusImpl ::Int -> [Set Node] -> PointsOfBlock -> Int
 calcFigureBonusImpl bonus target (PointsOfBlock pob) =
@@ -97,7 +109,7 @@ calcFigureBonus bp =
 calcBonusPoint :: FloorNodes -> BlockPosition -> Int
 calcBonusPoint bn bp = 
     let polygonBlockBonus = calcPolygonBlockBonus bn bp in
-    let centerBlockBonus = calcCenterBlockBonus bn bp in
+    let centerBlockBonus = calcCenterBlockBonus bp in
     let figureBonus = calcFigureBonus bp in
     polygonBlockBonus + centerBlockBonus + figureBonus
 
@@ -136,7 +148,7 @@ processBlock fn ude bp cl bc bcn startPoint endPoint =
     else
         let noblock_nodes = cuttingNodes fn poe in
         let target_nodes = getColorNode noblock_nodes bc in
-        L.concatMap (searchRoundRoot g departRoot departDistance) target_nodes
+        searchCenter fn ude poe departRoot departDistance bc bcn ++ L.concatMap (searchRoundRoot g departRoot departDistance) target_nodes
         where
             f :: Node -> Node -> [(Path,Float,BlockPosition)]
             f e backNode = solve fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
@@ -151,6 +163,12 @@ processBlock fn ude bp cl bc bcn startPoint endPoint =
                     let currentRoot = moveRoot ++ [backNode] in
                     let currentDistance = moveDistance + (spLength e backNode g) in
                     B.mapMaybe (\(path,distance,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentDistance + distance, newbp)) (f e backNode)
+            searchCenter :: FloorNodes -> FloorUnDirectedEdges -> PointsOfBlock -> [Node] -> Float -> BlockColor -> Node -> [(Path,Float,BlockPosition)]
+            searchCenter fn ude poe departRoot departDistance Black n = 
+                let noblock_ude = cuttingEdge (append_graph_edges ude graph_edges_with_center) poe in
+                let g = createGraph fn noblock_ude in
+                searchRoundRoot g departRoot departDistance 16
+            searchCenter _ _ _ _ _ _ _ = []
 
 solve :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 solve fn ude bp [] startPoint endPoint = gotoend fn ude bp startPoint endPoint
