@@ -33,8 +33,9 @@ compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
 calcAnyRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
 calcAnyRoot sp ep bp = 
     let roots = calcOptimizedRoot graph_nodes graph_edges bp (StartPoint sp) (EndPoint ep) in
-    let results = sortBy compareResult (L.map (\(n,d,bp) -> (calcBonusPoint graph_nodes bp,d,n,bp) ) roots) in
-    L.map head $ groupBy (\(a,_,_,_) -> \(b,_,_,_) -> a == b) results
+    let bps = L.map (\(n,d,bp) -> (calcBonusPoint graph_nodes bp,d,n,bp) ) roots in
+    let fs = L.map (\n -> L.filter (\(m,_,_,_) -> n == m) bps) [1..25] in
+    L.map (minimumBy (\(_,l,_,_) -> \(_,r,_,_) -> compare l r)) $ L.filter (not.(L.null)) fs
 
 dummyArray :: Array Int (Maybe Float)
 dummyArray = array (1,25) [(i,Nothing) | i <- [1..25]]
