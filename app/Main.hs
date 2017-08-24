@@ -16,11 +16,28 @@ isBlockConstraint :: [Int] -> Bool
 isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
 isBlockConstraint xs = False
 
+blockListRaw :: [[Int]]
+blockListRaw = concatMap permutations (L.filter (\n -> 5 == L.length n) (subsequences [1..16]))
+
 blockList :: [[Int]]
 blockList = L.filter isBlockConstraint $ concatMap permutations (L.filter (\n -> 5 == L.length n) (subsequences [1..15]))
 
+blockArrayRaw :: [BlockPosition]
+blockArrayRaw = L.map (\xs -> listArray (Red,Black) xs) blockListRaw
+
 blockArray :: [BlockPosition]
 blockArray = L.map (\xs -> listArray (Red,Black) xs) blockList
+
+answerList :: [[(Int,BlockPosition)]]
+answerList = reverse $ groupBy (\(l,_)-> \(r,_)-> l==r) $ sort $ L.map (\n -> (calcBonusPoint graph_nodes n,n)) blockArrayRaw
+
+answerListCSV :: [[String]]
+answerListCSV = L.map f answerList
+    where
+        f :: [(Int,BlockPosition)] -> [String]
+        f xs = (show (fst (head xs))) : (show (length xs)) : (L.map g xs)
+        g :: (Int,BlockPosition) -> String
+        g (_,bp) = show (A.elems bp)
 
 compareResult :: (Int, Float, Path, BlockPosition) -> (Int, Float, Path, BlockPosition) -> Ordering
 compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
@@ -51,3 +68,4 @@ main :: IO ()
 main = do
     writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine 10 11) blockArray
 --    print $ calcAnyRoot 10 11 $ head blockArray
+--    writeFile "answer.csv" $ printCSV answerListCSV
