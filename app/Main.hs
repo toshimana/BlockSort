@@ -79,5 +79,6 @@ main = do
 --    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcAnyRoot 10 11) blockArray
     writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
 --    print $ calcAnyRoot 10 11 $ head blockArray
---    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
+--    writeFile "answer.csv" $ printCSV answerListCSV
+--    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList
