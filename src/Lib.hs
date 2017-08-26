@@ -1,4 +1,4 @@
-module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, calcBonusPoint, solve, calcOptimizedRoot) where
+module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, calcBonusPoint, solve, calcOptimizedRoot, processBlockTarget, solveTarget, calcOptimizedRootTarget) where
 
 import Data.Array as A
 import Data.Map as M
@@ -179,3 +179,50 @@ calcOptimizedRoot :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> Star
 calcOptimizedRoot fn ude bp startPoint endPoint = 
     let bplist = A.assocs bp in
     solve fn ude bp bplist startPoint endPoint
+
+
+processBlockTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
+processBlockTarget fn ude bp cl bc bcn startPoint endPoint = 
+    let poe = PointsOfBlock $ S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
+    let noblock_ude = cuttingEdge ude poe in
+    let g = createGraph fn noblock_ude in
+    let current_block_point = bp A.! bc in
+    let (departRoot, departDistance) = searchShortPath startPoint (EndPoint current_block_point) g in
+    if L.null departRoot then []
+    else if (bc,bcn) == (Black,16) then searchCenter fn ude poe departRoot departDistance current_block_point 
+        else searchRoundRoot g departRoot departDistance current_block_point bcn
+        where
+            f :: Node -> Node -> [(Path,Float,BlockPosition)]
+            f e backNode = solveTarget fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
+            searchRoundRoot :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
+            searchRoundRoot g departRoot departDistance s e = 
+                let (returnRoot, returnDistance) = searchShortPath (StartPoint s) (EndPoint e) g in
+                if L.null returnRoot then []
+                else 
+                    let moveRoot = departRoot ++ returnRoot in
+                    let moveDistance = departDistance + returnDistance in
+                    let backNode = last (init moveRoot) in
+                    let currentRoot = moveRoot ++ [backNode] in
+                    let currentDistance = moveDistance + (spLength e backNode g) in
+                    B.mapMaybe (\(path,distance,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentDistance + distance, newbp)) (f e backNode)
+            searchCenter :: FloorNodes -> FloorUnDirectedEdges -> PointsOfBlock -> [Node] -> Float -> Node -> [(Path,Float,BlockPosition)]
+            searchCenter fn ude poe departRoot departDistance s = 
+                let noblock_ude = cuttingEdge (append_graph_edges ude graph_edges_with_center) poe in
+                let g = createGraph fn noblock_ude in
+                searchRoundRoot g departRoot departDistance s 16
+
+
+solveTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
+solveTarget fn ude bp [] startPoint endPoint = gotoend fn ude bp startPoint endPoint
+solveTarget fn ude bp unprocessBlocks startPoint endPoint = 
+    concatMap (\p@(color,node) -> processBlockTarget fn ude bp (L.delete p unprocessBlocks) color node startPoint endPoint) unprocessBlocks
+
+calcOptimizedRootTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [BlockPosition] -> StartPoint -> EndPoint -> Maybe (Path,Float,BlockPosition)
+calcOptimizedRootTarget fn ude bp tblist startPoint endPoint = 
+    let ans = L.concatMap f tblist in
+    if L.null ans then Nothing else Just (minimumBy (\(_,l,_) -> \(_,r,_) -> compare l r) ans)
+    where
+        f :: BlockPosition -> [(Path,Float,BlockPosition)]
+        f tb = let bplist = A.assocs tb in solveTarget fn ude bp bplist startPoint endPoint
+        
+

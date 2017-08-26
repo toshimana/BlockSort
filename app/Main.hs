@@ -3,6 +3,7 @@ module Main where
 import Data.List as L
 import Data.Array as A
 import Data.Map as M
+import Data.Maybe
 import Text.CSV
 import Data.Graph.Inductive.Graph
 
@@ -47,6 +48,9 @@ compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
     | d2 < d1 = GT
     | otherwise = compare (p1,bp1) (p2,bp2)
 
+dummyArray :: Array Int (Maybe Float)
+dummyArray = array (21,25) [(i,Nothing) | i <- [21..25]]
+
 calcAnyRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
 calcAnyRoot sp ep bp = 
     let roots = calcOptimizedRoot graph_nodes graph_edges bp (StartPoint sp) (EndPoint ep) in
@@ -54,18 +58,26 @@ calcAnyRoot sp ep bp =
     let fs = L.map (\n -> L.filter (\(m,_,_,_) -> n == m) bps) [1..25] in
     L.map (minimumBy (\(_,l,_,_) -> \(_,r,_,_) -> compare l r)) $ L.filter (not.(L.null)) fs
 
-dummyArray :: Array Int (Maybe Float)
-dummyArray = array (1,25) [(i,Nothing) | i <- [1..25]]
+calcTargetRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
+calcTargetRoot sp ep bp = catMaybes [getAnswerList 25, getAnswerList 23, getAnswerList 21]
+    where
+        f :: [BlockPosition] -> Int -> Maybe (Int,Float,[Node],BlockPosition)
+        f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs (StartPoint sp) (EndPoint ep)) 
+        getAnswerList :: Int -> Maybe (Int, Float, [Node], BlockPosition)
+        getAnswerList n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
 
-generateRootCSVLine :: Int -> Int -> BlockPosition -> [String]
-generateRootCSVLine sp ep bp = 
-    let xs = calcAnyRoot sp ep bp in
+
+generateRootCSVLine :: (Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]) -> Int -> Int -> BlockPosition -> [String]
+generateRootCSVLine f sp ep bp = 
+    let xs = f sp ep bp in
     let ys = L.map (\(a,b,_,_) -> (a, Just b)) xs in
     let arr = dummyArray // ys in
-    (show bp) : (L.map (maybe "" show) (A.elems arr))
+    (show (A.elems bp)) : (L.map (maybe "" show) (A.elems arr))
 
 main :: IO ()
 main = do
-    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine 10 11) blockArray
+--    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcAnyRoot 10 11) blockArray
+    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
 --    print $ calcAnyRoot 10 11 $ head blockArray
 --    writeFile "answer.csv" $ printCSV answerListCSV
+--    print $ calcTargetRoot 10 11 $ blockArray !! 2
