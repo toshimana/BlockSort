@@ -68,42 +68,45 @@ calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
 calcCenterBlockBonus :: BlockPosition -> Int
 calcCenterBlockBonus bp = if bp A.! Black == 16 then 5 else 0
 
-calcFigureBonusImpl ::Int -> [Set Node] -> PointsOfBlock -> Int
-calcFigureBonusImpl bonus target (PointsOfBlock pob) =
-    L.foldl' (\cur -> \elt -> if isSubsetOf elt pob then cur+bonus else cur) 0 target
+convertNodesToColorNode :: [[Node]] -> [Set (BlockColor, Node)]
+convertNodesToColorNode = L.map (S.fromList . (L.map (\n -> ((M.!) node_color_map n, n))))
+
+calcFigureBonusImpl ::Int -> [Set (BlockColor,Node)] -> Set (BlockColor,Node) -> Int
+calcFigureBonusImpl bonus target bs =
+    L.foldl' (\cur -> \elt -> if isSubsetOf elt bs then cur+bonus else cur) 0 target
 
 
-triangles :: [Set Node]
-triangles = L.map S.fromList [[1,2,5],[1,5,10],[2,3,6],[3,4,7],[4,7,11],[8,12,13],[9,14,15]]
+triangles :: [Set (BlockColor,Node)]
+triangles = convertNodesToColorNode [[1,2,5],[1,5,10],[2,3,6],[3,4,7],[4,7,11],[8,12,13],[9,14,15]]
 
-calcTriangleBonus :: PointsOfBlock -> Int
+calcTriangleBonus :: Set (BlockColor,Node) -> Int
 calcTriangleBonus = calcFigureBonusImpl 5 triangles
 
-depressionSquare :: [Set Node]
-depressionSquare = L.map S.fromList [[1,2,5,10],[3,4,7,11]]
+depressionSquare :: [Set (BlockColor,Node)]
+depressionSquare = convertNodesToColorNode [[1,2,5,10],[3,4,7,11]]
 
-calcDepressionSquareBonus :: PointsOfBlock -> Int
+calcDepressionSquareBonus :: Set (BlockColor,Node) -> Int
 calcDepressionSquareBonus = calcFigureBonusImpl 2 depressionSquare
 
-square :: [Set Node]
-square = L.map S.fromList [[2,5,6,8],[3,6,7,9],[5,8,10,12],[7,9,11,15]]
+square :: [Set (BlockColor,Node)]
+square = convertNodesToColorNode [[2,5,6,8],[3,6,7,9],[5,8,10,12],[7,9,11,15]]
 
-calcSquareBonus :: PointsOfBlock -> Int
+calcSquareBonus :: Set (BlockColor,Node) -> Int
 calcSquareBonus = calcFigureBonusImpl 8 square
 
-pentagon :: [Set Node]
-pentagon = L.map S.fromList [[6,8,9,13,14]]
+pentagon :: [Set (BlockColor,Node)]
+pentagon = [S.fromList [(Red,8),(Green,6),(Blue,9),(Yellow,13),(Black,14)], S.fromList [(Red,14),(Green,6),(Blue,9),(Yellow,13),(Black,8)]]
 
-calcPentagonBonus :: PointsOfBlock -> Int
+calcPentagonBonus :: Set (BlockColor,Node) -> Int
 calcPentagonBonus = calcFigureBonusImpl 15 pentagon
 
 calcFigureBonus :: BlockPosition -> Int
 calcFigureBonus bp = 
-    let pointsOfBlock = PointsOfBlock (S.fromList (A.elems bp)) in
-    let triangleBonus = calcTriangleBonus pointsOfBlock in
-    let depressionSquareBonus = calcDepressionSquareBonus pointsOfBlock in
-    let squareBonus = calcSquareBonus pointsOfBlock in
-    let pentagonBonus = calcPentagonBonus pointsOfBlock in
+    let blockSet = S.fromList (A.assocs bp) in
+    let triangleBonus = calcTriangleBonus blockSet in
+    let depressionSquareBonus = calcDepressionSquareBonus blockSet in
+    let squareBonus = calcSquareBonus blockSet in
+    let pentagonBonus = calcPentagonBonus blockSet in
     triangleBonus + depressionSquareBonus + squareBonus + pentagonBonus
 
 calcBonusPoint :: FloorNodes -> BlockPosition -> Int
