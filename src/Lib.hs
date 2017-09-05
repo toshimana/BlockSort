@@ -161,12 +161,12 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
                     case searchShortPath (StartPoint s) (EndPoint e) g of
                         Nothing -> []
                         Just (returnRoot, returnCost) ->
-                            let moveRoot = departRoot ++ returnRoot in
+                            let moveRoot = departRoot ++ (tail returnRoot) in
                             let moveCost = departCost + returnCost in
                             let backNode = last (init moveRoot) in
                             let currentRoot = moveRoot ++ [backNode] in
                             let currentCost = maybe 0 ((+) moveCost) (spLength e backNode g) in
-                            B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentCost + cost, newbp)) (f e backNode)
+                            B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) (f e backNode)
                 searchCenter :: FloorNodes -> FloorUnDirectedEdges -> PointsOfBlock -> [Node] -> Float -> Node -> [(Path,Float,BlockPosition)]
                 searchCenter fn ude poe departRoot departCost s = 
                     let noblock_ude = cuttingEdge (append_graph_edges ude graph_edges_with_center) poe in
