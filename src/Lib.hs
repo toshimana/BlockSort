@@ -1,4 +1,4 @@
-module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget) where
+module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget) where
 
 import Data.Array as A
 import Data.Map as M
@@ -54,6 +54,23 @@ createGraph (FloorNodes nodes) unDirectedEdges =
     let (FloorDirectedEdges directedEdges) = convertDirectedEdges unDirectedEdges in
     mkGraph nodes directedEdges
 
+redIndices :: [Maybe Int]
+redIndices = [Nothing,Just 1,Just 2,Just 3,Just 4,Just 5,Nothing,Nothing,Just 6,Just 7,Just 8,Just 9,Just 10,Nothing,Just 11]
+
+yellowIndices :: [Maybe Int]
+yellowIndices = [Just 1,Just 2,Nothing,Just 3,Nothing,Just 4,Just 5,Just 6,Just 7,Just 8,Just 9,Just 10,Nothing,Just 11,Nothing]
+
+blueIndices :: [Maybe Int]
+blueIndices = [Just 1,Nothing,Just 2,Nothing,Just 3,Just 4,Just 5,Just 6,Nothing,Just 7,Just 8,Nothing,Just 9,Just 10,Just 11]
+
+toInitCode :: BlockPosition -> Int
+toInitCode bp = 
+    let blackP = bp A.! Black in
+    let redP = fromJust $ redIndices !! ((bp A.! Red)-1) in
+    let yellowP = fromJust $ yellowIndices !! ((bp A.! Yellow)-1) in
+    let blueP = fromJust $ blueIndices !! ((bp A.! Blue)-1) in
+    (blackP-1)*11*11*11+(redP-1)*11*11+(yellowP-1)*11+(blueP-1)
+    
 calcPolygonBlockBonus :: FloorNodes -> BlockPosition -> Int
 calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
         where
