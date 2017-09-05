@@ -11,18 +11,6 @@ import EndPoint
 spec :: Spec
 spec = do
     describe "solve" $ do
-        it "sample01" $ do
-            let bns = array (Red,Red) [(Red,1)]
-            solve graph_nodes graph_edges bns [] (StartPoint 10) (EndPoint 11) `shouldBe` []
-
-        it "sample02" $ do
-            let bns = array (Red,Red) [(Red,14)]
-            solve graph_nodes graph_edges bns [] (StartPoint 14) (EndPoint 11) `shouldBe` []
-
-        it "sample03" $ do
-            let bns = array (Red,Red) [(Red,2)]
-            solve graph_nodes graph_edges bns [(Red,2)] (StartPoint 10) (EndPoint 11) `shouldBe` []
-
         it "sample04" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,5)]
             [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []

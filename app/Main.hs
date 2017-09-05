@@ -51,13 +51,6 @@ compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
 dummyArray :: Array Int (Maybe Float)
 dummyArray = array (21,25) [(i,Nothing) | i <- [21..25]]
 
-calcAnyRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
-calcAnyRoot sp ep bp = 
-    let roots = calcOptimizedRoot graph_nodes graph_edges bp (StartPoint sp) (EndPoint ep) in
-    let bps = L.map (\(n,d,bp) -> (calcBonusPoint graph_nodes bp,d,n,bp) ) roots in
-    let fs = L.map (\n -> L.filter (\(m,_,_,_) -> n == m) bps) [1..25] in
-    L.map (minimumBy (\(_,l,_,_) -> \(_,r,_,_) -> compare l r)) $ L.filter (not.(L.null)) fs
-
 calcTargetRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
 calcTargetRoot sp ep bp = catMaybes [getAnswerList 25, getAnswerList 23, getAnswerList 21]
     where
@@ -76,9 +69,7 @@ generateRootCSVLine f sp ep bp =
 
 main :: IO ()
 main = do
---    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcAnyRoot 10 11) blockArray
     writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
---    print $ calcAnyRoot 10 11 $ head blockArray
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList
