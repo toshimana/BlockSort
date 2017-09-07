@@ -63,6 +63,18 @@ yellowIndices = [Just 1,Just 2,Nothing,Just 3,Nothing,Just 4,Just 5,Just 6,Just 
 blueIndices :: [Maybe Int]
 blueIndices = [Just 1,Nothing,Just 2,Nothing,Just 3,Just 4,Just 5,Just 6,Nothing,Just 7,Just 8,Nothing,Just 9,Just 10,Just 11]
 
+revIndices :: [Maybe Int] -> [Int]
+revIndices indices = L.map snd $ L.filter (\(a,_) -> isJust a) $ zip indices [1..]
+
+revRedIndices :: [Int]
+revRedIndices = revIndices redIndices
+
+revYellowIndices :: [Int]
+revYellowIndices = revIndices yellowIndices
+
+revBlueIndices :: [Int]
+revBlueIndices = revIndices blueIndices
+
 toInitCode :: BlockPosition -> Int
 toInitCode bp = 
     let blackP = bp A.! Black in
@@ -72,7 +84,12 @@ toInitCode bp =
     (blackP-1)*11*11*11+(redP-1)*11*11+(yellowP-1)*11+(blueP-1)
 
 fromInitCode :: Int -> Int -> BlockPosition
-fromInitCode gp code = undefined
+fromInitCode gp code = 
+    let kp = div code (11*11*11) + 1 in
+    let rp = revRedIndices !! (mod (div code (11*11)) 11) in
+    let yp = revYellowIndices !! (mod (div code 11) 11) in
+    let bp = revBlueIndices !! (mod code 11) in
+    array (Red,Black) [(Red,rp),(Green,gp),(Blue,bp),(Yellow,yp),(Black,kp)]
 
 calcPolygonBlockBonus :: FloorNodes -> BlockPosition -> Int
 calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList

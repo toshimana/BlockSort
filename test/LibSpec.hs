@@ -34,3 +34,16 @@ spec = do
     describe "toInitCode" $ do
         it "sample01" $ do
             toInitCode (array (Red,Black) [(Red,15),(Blue,14),(Yellow,12),(Black,13)])`shouldBe` (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
+        
+        it "sample02" $ do
+            let code = (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
+            fromInitCode 1 code `shouldBe` (array (Red,Black) [(Red,15),(Green,1),(Blue,14),(Yellow,12),(Black,13)])
+
+        it "sample03" $ do
+            let arr = array (Red,Black) [(Red,15),(Green,1),(Blue,14),(Yellow,12),(Black,13)]
+            fromInitCode 1 (toInitCode arr) `shouldBe` arr
+
+        it "sample04" $ do
+            let code = (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
+            toInitCode (fromInitCode 1 code) `shouldBe` code
+            
