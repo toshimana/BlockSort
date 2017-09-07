@@ -1,4 +1,4 @@
-module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget) where
+module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget) where
 
 import Data.Array as A
 import Data.Map as M
@@ -70,7 +70,10 @@ toInitCode bp =
     let yellowP = fromJust $ yellowIndices !! ((bp A.! Yellow)-1) in
     let blueP = fromJust $ blueIndices !! ((bp A.! Blue)-1) in
     (blackP-1)*11*11*11+(redP-1)*11*11+(yellowP-1)*11+(blueP-1)
-    
+
+fromInitCode :: Int -> Int -> BlockPosition
+fromInitCode gp code = undefined
+
 calcPolygonBlockBonus :: FloorNodes -> BlockPosition -> Int
 calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
         where

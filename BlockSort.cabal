@@ -38,6 +38,7 @@ executable BlockSort-exe
                      , array
                      , fgl
                      , csv
+                     , binary
   default-language:    Haskell2010
 
 test-suite BlockSort-test

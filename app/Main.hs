@@ -3,6 +3,7 @@ module Main where
 import Data.List as L
 import Data.Array as A
 import Data.Map as M
+import Data.Binary
 import Data.Maybe
 import Text.CSV
 import Data.Graph.Inductive.Graph
@@ -12,6 +13,7 @@ import BlockColor
 import FloorNodes
 import StartPoint
 import EndPoint
+import BinaryData
 
 isBlockConstraint :: [Int] -> Bool
 isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
@@ -67,9 +69,20 @@ generateRootCSVLine f sp ep bp =
     let arr = dummyArray // ys in
     (show (A.elems bp)) : (L.map (maybe "" show) (A.elems arr))
 
+writeBinary :: FilePath -> Int -> IO ()
+writeBinary path greenPos = 
+    let bps = L.map (f greenPos) [1..15*11*11*11] in
+    let bd = BinaryData $ array (1,15*11*11*11) bps in
+    encodeFile path bd
+    where
+        f :: Int -> Int -> (Int,[Word8])
+        f gp n = let bp = fromInitCode gp n in undefined
+
+
 main :: IO ()
 main = do
     writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
+    writeBinary "root.bin" 1
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList
