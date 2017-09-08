@@ -3,6 +3,7 @@ module Main where
 import Data.List as L
 import Data.Array as A
 import Data.Map as M
+import Data.Set as S
 import Data.Binary
 import Data.Maybe
 import Text.CSV
@@ -14,25 +15,6 @@ import FloorNodes
 import StartPoint
 import EndPoint
 import BinaryData
-
-isBlockConstraint :: [Int] -> Bool
-isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
-isBlockConstraint xs = False
-
-blockListRaw :: [[Int]]
-blockListRaw = concatMap permutations (L.filter (\n -> 5 == L.length n) (subsequences [1..16]))
-
-blockList :: [[Int]]
-blockList = L.filter isBlockConstraint $ concatMap permutations (L.filter (\n -> 5 == L.length n) (subsequences [1..15]))
-
-blockArrayRaw :: [BlockPosition]
-blockArrayRaw = L.map (\xs -> listArray (Red,Black) xs) blockListRaw
-
-blockArray :: [BlockPosition]
-blockArray = L.map (\xs -> listArray (Red,Black) xs) blockList
-
-answerList :: [[(Int,BlockPosition)]]
-answerList = reverse $ groupBy (\(l,_)-> \(r,_)-> l==r) $ sort $ L.map (\n -> (calcBonusPoint graph_nodes n,n)) blockArrayRaw
 
 answerListCSV :: [[String]]
 answerListCSV = L.map f answerList
@@ -51,16 +33,7 @@ compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
     | otherwise = compare (p1,bp1) (p2,bp2)
 
 dummyArray :: Array Int (Maybe Float)
-dummyArray = array (21,25) [(i,Nothing) | i <- [21..25]]
-
-calcTargetRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
-calcTargetRoot sp ep bp = catMaybes [getAnswerList 25, getAnswerList 23, getAnswerList 21]
-    where
-        f :: [BlockPosition] -> Int -> Maybe (Int,Float,[Node],BlockPosition)
-        f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs (StartPoint sp) (EndPoint ep)) 
-        getAnswerList :: Int -> Maybe (Int, Float, [Node], BlockPosition)
-        getAnswerList n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
-
+dummyArray = array (20,25) [(i,Nothing) | i <- [20..25]]
 
 generateRootCSVLine :: (Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]) -> Int -> Int -> BlockPosition -> [String]
 generateRootCSVLine f sp ep bp = 
@@ -69,20 +42,13 @@ generateRootCSVLine f sp ep bp =
     let arr = dummyArray // ys in
     (show (A.elems bp)) : (L.map (maybe "" show) (A.elems arr))
 
-writeBinary :: FilePath -> Int -> IO ()
-writeBinary path greenPos = 
-    let bps = L.map (f greenPos) [1..15*11*11*11] in
-    let bd = BinaryData $ array (1,15*11*11*11) bps in
-    encodeFile path bd
-    where
-        f :: Int -> Int -> (Int,[Word8])
-        f gp n = let bp = fromInitCode gp n in undefined
 
 
 main :: IO ()
 main = do
-    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
-    writeBinary "root.bin" 1
+--    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
+    print $ createBinary 1 4000.0
+--    encodeFile "root.bin" $ createBinary 1 4000.0
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList

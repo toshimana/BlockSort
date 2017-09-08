@@ -2,6 +2,8 @@ module LibSpec (spec) where
 
 import Test.Hspec
 import Data.Array
+import Data.List
+import Data.Maybe
 
 import Lib
 import BlockColor
@@ -30,6 +32,25 @@ spec = do
         it "sample08" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
             [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
+
+        it "sample09" $ do
+            let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
+            calcTargetRoot 10 11 bns `shouldBe` []
+            
+        it "sample10" $ do
+            let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
+            getAnswerList 10 11 bns 20 `shouldBe` Nothing
+        
+        it "sample11" $ do
+            let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
+            let ls = fromJust (find (\xs -> fst (head xs) == 20) answerList)
+            let (_,xs) = ls !! 17
+            [xs] `shouldBe` []
+--            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 10) (EndPoint 11) `shouldBe` Nothing
+
+        it "sample12" $ do
+            let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,10)]
+            [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
 
     describe "toInitCode" $ do
         it "sample01" $ do

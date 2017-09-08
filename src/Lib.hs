@@ -1,10 +1,11 @@
-module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget) where
+module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary) where
 
 import Data.Array as A
 import Data.Map as M
 import Data.Set as S
 import Data.List as L
 import Data.Maybe as B
+import Data.Word
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Query.SP
@@ -13,6 +14,7 @@ import BlockColor
 import FloorNodes
 import StartPoint
 import EndPoint
+import BinaryData
 
 type BlockPosition = Array BlockColor Node
 type BlockGraph = Gr BlockColor Float
@@ -223,4 +225,52 @@ calcOptimizedRootTarget fn ude bp tblist startPoint endPoint =
         f :: BlockPosition -> [(Path,Float,BlockPosition)]
         f tb = let bplist = A.assocs tb in solveTarget fn ude bp bplist startPoint endPoint
         
+blockListRaw :: [[Int]]
+blockListRaw = concatMap permutations (L.filter (\n -> 5 == L.length n) (subsequences [1..16]))
+
+blockList :: [[Int]]
+blockList = L.filter isBlockConstraint $ concatMap permutations (L.filter (\n -> 5 == L.length n) (subsequences [1..15]))
+
+blockArrayRaw :: [BlockPosition]
+blockArrayRaw = L.map (\xs -> listArray (Red,Black) xs) blockListRaw
+
+blockArray :: [BlockPosition]
+blockArray = L.map (\xs -> listArray (Red,Black) xs) blockList
+
+answerList :: [[(Int,BlockPosition)]]
+answerList = reverse $ groupBy (\(l,_)-> \(r,_)-> l==r) $ sort $ L.map (\n -> (calcBonusPoint graph_nodes n,n)) blockArrayRaw
+
+isInitBlockPosition :: BlockPosition -> Bool
+isInitBlockPosition bp = 
+    let checkedColor = all (\(c,i) -> node_color_map M.! i /= c) (A.assocs bp) in
+    let checkedDuplicate = S.size (S.fromList (A.elems bp)) == 5 in
+    checkedColor && checkedDuplicate
+
+isBlockConstraint :: [Int] -> Bool
+isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
+isBlockConstraint xs = False
+
+getAnswerList :: Int -> Int -> BlockPosition -> Int -> Maybe (Int, Float, [Node], BlockPosition)
+getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
+    where
+        f :: [BlockPosition] -> Int -> Maybe (Int,Float,[Node],BlockPosition)
+        f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs (StartPoint sp) (EndPoint ep)) 
+
+calcTargetRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
+calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 20]--[getAnswerList 25, getAnswerList 23, getAnswerList 21, getAnswerList 20 ]
+
+createRootFromCode :: Int -> Float -> Int -> [Word8]
+createRootFromCode gp cost n = 
+    let bp = fromInitCode gp n in 
+    if isInitBlockPosition bp then g cost (calcTargetRoot 10 11 bp) else []
+        where
+            g :: Float -> [(Int,Float,[Node],BlockPosition)] -> [Word8]
+            g cost xs = 
+                let fs = L.filter (\(_,c,_,_) -> c <= cost) xs in 
+                if L.null fs then [] else let (_,_,r,_) = head (sort fs) in L.map fromIntegral r
+        
+createBinary :: Int -> Float -> BinaryData
+createBinary greenPos maxCost = 
+    let bps = L.map (\n -> (n,createRootFromCode greenPos maxCost n)) [0..15*11*11*11-1] in
+    BinaryData $ array (0,15*11*11*11-1) bps
 

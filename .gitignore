@@ -5,4 +5,5 @@
 *.csv
 *.txt
 *.prof
+*.bin
 .stack-work/

@@ -15,5 +15,5 @@ instance Binary BinaryData where
         mapM_ g es
 
     get = do
-        ms <- mapM (\idx -> mapM (\_ -> getWord8) [1..256] >>= return.(\n->(idx,takeWhile (/= 0) n))) [1..15*11*11*11] 
-        return $ BinaryData (array (1,15*11*11*11) ms)
+        ms <- mapM (\idx -> mapM (\_ -> getWord8) [1..256] >>= return.(\n->(idx,takeWhile (/= 0) n))) [0..15*11*11*11-1] 
+        return $ BinaryData (array (0,15*11*11*11-1) ms)
