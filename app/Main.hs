@@ -47,8 +47,8 @@ generateRootCSVLine f sp ep bp =
 main :: IO ()
 main = do
 --    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
-    print $ createBinary 1 4000.0
---    encodeFile "root.bin" $ createBinary 1 4000.0
+--    print $ createBinary 1 4000.0
+    encodeFile "root.bin" $ createBinary 1 4000.0
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList
