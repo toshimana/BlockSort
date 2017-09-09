@@ -1,4 +1,4 @@
-module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock) where
+module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode) where
 
 import Data.Array as A
 import Data.Map as M
@@ -247,8 +247,13 @@ isDeadLock checked cl bp e = if L.elem e checked then True
             let next = L.find (\(c,n) -> fst target == c) cl in
             maybe False (\(_,n) -> isDeadLock (e:checked) cl bp n) next
 
-findEscapeNode :: Node
-findEscapeNode = undefined 
+findEscapeNode :: BlockGraph -> BlockPosition -> [(BlockColor, Node)] -> Node -> (Path, Float)
+findEscapeNode g bp cl s = let onboardnodes = A.elems bp in 
+    let targetnodes = L.map snd cl in
+    let checknodes = onboardnodes ++ targetnodes in
+    let nodes = L.filter (\n -> not (L.elem n checknodes)) [1..15] in
+    let ms = catMaybes $ L.map (\e -> searchShortPath (StartPoint s) (EndPoint e) g) nodes in
+    head $ L.sortBy (\(_,l) -> \(_,r) -> compare l r) ms
 
 processBlockTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 processBlockTarget fn ude bp cl bc bcn startPoint endPoint = 
@@ -267,19 +272,17 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
                     f :: Node -> Node -> [(Path,Float,BlockPosition)]
                     f e backNode = solveTarget fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
                     searchRoundRoot :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
-                    searchRoundRoot g departRoot departCost s e = 
-                        if isDeadLock [] ((bcn,e):cl) bp e
-                        then let escapePoint = findEscapeNode in
-                            case searchShortPath (StartPoint s) (EndPoint escapePoint) g of
-                                Nothing -> []
-                                Just (returnRoot, returnCost) -> 
-                                    let moveRoot = departRoot ++ (tail returnRoot) in
-                                    let moveCost = departCost + returnCost in
-                                    let backNode = last (init moveRoot) in
-                                    let currentRoot = moveRoot ++ [backNode] in
-                                    let currentCost = maybe 0 ((+) moveCost) (spLength e backNode g) in
-                                    let restSolve = solveTarget fn ude (bp // [(bc,escapePoint)]) ((bc,bcn):cl) (StartPoint backNode) endPoint in
-                                    B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
+                    searchRoundRoot g departRoot departCost s e = let currentCl = (bc,e):cl in
+                        if isDeadLock [] currentCl bp e
+                        then let (returnRoot, returnCost) = findEscapeNode g bp currentCl s in
+                                let moveRoot = departRoot ++ (tail returnRoot) in
+                                let moveCost = departCost + returnCost in
+                                let escapeNode = last moveRoot in
+                                let backNode = last (init moveRoot) in
+                                let currentRoot = moveRoot ++ [backNode] in
+                                let currentCost = maybe 0 ((+) moveCost) (spLength e backNode g) in
+                                let restSolve = solveTarget fn ude (bp // [(bc,escapeNode)]) ((bc,bcn):cl) (StartPoint backNode) endPoint in
+                                B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
                         else searchRoundRoot_ g departRoot departCost s e
                     searchRoundRoot_ :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
                     searchRoundRoot_ g departRoot departCost s e = 
@@ -343,7 +346,7 @@ getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bp
         f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs (StartPoint sp) (EndPoint ep)) 
 
 calcTargetRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
-calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 25] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
+calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 23] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
 
 createRootFromCode :: Int -> Float -> Int -> [Word8]
 createRootFromCode gp cost n = 

@@ -51,6 +51,10 @@ spec = do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,10)]
             [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
 
+        it "sample13" $ do
+            let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
+            processBlockTarget graph_nodes graph_edges bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` []
+            
     describe "toInitCode" $ do
         it "sample01" $ do
             toInitCode (array (Red,Black) [(Red,15),(Blue,14),(Yellow,12),(Black,13)])`shouldBe` (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
