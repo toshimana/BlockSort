@@ -343,19 +343,19 @@ isBlockConstraint :: [Int] -> Bool
 isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
 isBlockConstraint xs = False
 
-getAnswerList :: Int -> Int -> BlockPosition -> Int -> Maybe (Int, Float, [Node], BlockPosition)
+getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> Int -> Maybe (Int, Float, [Node], BlockPosition)
 getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
     where
         f :: [BlockPosition] -> Int -> Maybe (Int,Float,[Node],BlockPosition)
-        f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs (StartPoint sp) (EndPoint ep)) 
+        f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs sp ep) 
 
-calcTargetRoot :: Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
+calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
 calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 23] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
 
 createRootFromCode :: Int -> Float -> Int -> [Word8]
 createRootFromCode gp cost n = 
     let bp = fromInitCode gp n in 
-    if isInitBlockPosition bp then g cost (calcTargetRoot 17 18 bp) else []
+    if isInitBlockPosition bp then g cost (calcTargetRoot (StartPoint 17) (EndPoint 18) bp) else []
         where
             g :: Float -> [(Int,Float,[Node],BlockPosition)] -> [Word8]
             g cost xs = 

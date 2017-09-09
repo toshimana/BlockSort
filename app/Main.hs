@@ -35,7 +35,7 @@ compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
 dummyArray :: Array Int (Maybe Float)
 dummyArray = array (20,25) [(i,Nothing) | i <- [20..25]]
 
-generateRootCSVLine :: (Int -> Int -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]) -> Int -> Int -> BlockPosition -> [String]
+generateRootCSVLine :: (StartPoint -> EndPoint -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]) -> StartPoint -> EndPoint -> BlockPosition -> [String]
 generateRootCSVLine f sp ep bp = 
     let xs = f sp ep bp in
     let ys = L.map (\(a,b,_,_) -> (a, Just b)) xs in
@@ -44,7 +44,7 @@ generateRootCSVLine f sp ep bp =
 
 main :: IO ()
 main = do
-    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 17 18) blockArray
+    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot (StartPoint 17) (EndPoint 18)) blockArray
 --    print $ createBinary 1 4000.0
 --    encodeFile "root.bin" $ createBinary 1 4000.0
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
