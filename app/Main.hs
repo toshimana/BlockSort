@@ -42,13 +42,17 @@ generateRootCSVLine f sp ep bp =
     let arr = dummyArray // ys in
     (show (A.elems bp)) : (L.map (maybe "" show) (A.elems arr))
 
-
-
 main :: IO ()
 main = do
+<<<<<<< HEAD
 --    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
 --    print $ createBinary 1 4000.0
     encodeFile "root.bin" $ createBinary 1 4000.0
+=======
+    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 17 18) blockArray
+--    print $ createBinary 1 4000.0
+--    encodeFile "root.bin" $ createBinary 1 4000.0
+>>>>>>> 6f07d9e1b2b49d5af075e06726b58fd7ec4e744a
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList

@@ -45,12 +45,20 @@ spec = do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
             let ls = fromJust (find (\xs -> fst (head xs) == 20) answerList)
             let (_,xs) = ls !! 17
+<<<<<<< HEAD
             calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 17) (EndPoint 11) `shouldBe` Nothing
+=======
+            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 10) (EndPoint 11) `shouldBe` Nothing
+>>>>>>> 6f07d9e1b2b49d5af075e06726b58fd7ec4e744a
 
         it "sample12" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,10)]
             [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 17) (EndPoint 11)] `shouldBe` []
 
+        it "sample13" $ do
+            let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
+            processBlockTarget graph_nodes graph_edges bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` []
+            
     describe "toInitCode" $ do
         it "sample01" $ do
             toInitCode (array (Red,Black) [(Red,15),(Blue,14),(Yellow,12),(Black,13)])`shouldBe` (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
@@ -66,4 +74,12 @@ spec = do
         it "sample04" $ do
             let code = (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
             toInitCode (fromInitCode 1 code) `shouldBe` code
-            
+    
+    describe "isDeadLock" $ do
+        it "sample01" $ do
+            let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
+            isDeadLock [] [(Blue,2),(Red,1)] arr 2 `shouldBe` True
+
+        it "sample02" $ do
+            let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
+            isDeadLock [2] [(Blue,2),(Red,1)] arr 1 `shouldBe` True            
