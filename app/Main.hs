@@ -42,12 +42,10 @@ generateRootCSVLine f sp ep bp =
     let arr = dummyArray // ys in
     (show (A.elems bp)) : (L.map (maybe "" show) (A.elems arr))
 
-
-
 main :: IO ()
 main = do
---    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
-    print $ createBinary 1 4000.0
+    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
+--    print $ createBinary 1 4000.0
 --    encodeFile "root.bin" $ createBinary 1 4000.0
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
