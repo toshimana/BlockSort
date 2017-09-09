@@ -11,7 +11,6 @@ import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Query.SP
 
 import BlockColor
-import FloorNodes
 import BinaryData
 import InitCode
 
@@ -21,6 +20,8 @@ type BlockGraph = Gr BlockColor Float
 data PointsOfBlock = PointsOfBlock (Set Node)
 data FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
 data FloorDirectedEdges = FloorDirectedEdges [LEdge Float]
+
+newtype FloorNodes = FloorNodes [LNode BlockColor]
 
 newtype StartPoint = StartPoint Node
 newtype EndPoint = EndPoint Node
