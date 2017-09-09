@@ -309,13 +309,13 @@ isBlockConstraint :: [Int] -> Bool
 isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
 isBlockConstraint xs = False
 
-getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> Int -> Maybe (Int, Float, [Node], BlockPosition)
+getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> Int -> Maybe (Int, Float, Path, BlockPosition)
 getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
     where
-        f :: [BlockPosition] -> Int -> Maybe (Int,Float,[Node],BlockPosition)
+        f :: [BlockPosition] -> Int -> Maybe (Int,Float,Path,BlockPosition)
         f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs sp ep) 
 
-calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
+calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(Int,Float,Path,BlockPosition)]
 calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 23] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
 
 createRootFromCode :: Node -> Float -> InitCode -> [Word8]
@@ -330,6 +330,6 @@ createRootFromCode gp cost code =
         
 createBinary :: Node -> Float -> BinaryData
 createBinary greenPos maxCost = 
-    let bps = L.map (\n -> let code = InitCode n in (code,createRootFromCode greenPos maxCost code)) [0..15*11*11*11-1] in
-    BinaryData $ array (InitCode 0,InitCode (15*11*11*11-1)) bps
+    let bps = L.map (\n -> (n,createRootFromCode greenPos maxCost n)) allInitCode in
+    BinaryData $ array (minBound, maxBound) bps
 

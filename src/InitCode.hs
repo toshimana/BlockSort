@@ -1,4 +1,4 @@
-module InitCode (InitCode(..), toInitCode, fromInitCode)  where
+module InitCode (InitCode(..), allInitCode, toInitCode, fromInitCode)  where
 
 import Data.Array
 import Data.Maybe
@@ -9,6 +9,13 @@ import BlockColor
 type BlockPosition = Array BlockColor Node
 
 newtype InitCode = InitCode Int deriving (Ix,Ord,Eq,Show)
+
+instance Bounded InitCode where
+    minBound = InitCode 0
+    maxBound = InitCode (15*11*11*11-1)
+
+allInitCode :: [InitCode]
+allInitCode = [InitCode i | i <- [0..15*11*11*11-1]]
 
 redIndices :: [Maybe Int]
 redIndices = [Nothing,Just 1,Just 2,Just 3,Just 4,Just 5,Nothing,Nothing,Just 6,Just 7,Just 8,Just 9,Just 10,Nothing,Just 11]
