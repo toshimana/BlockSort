@@ -5,7 +5,9 @@ import Data.Binary
 import Data.Array
 import Control.Monad
 
-data BinaryData = BinaryData (Array Int [Word8]) deriving (Show,Eq)
+import InitCode
+
+data BinaryData = BinaryData (Array InitCode [Word8]) deriving (Show,Eq)
 
 instance Binary BinaryData where
     put (BinaryData arr) = do 
@@ -15,5 +17,5 @@ instance Binary BinaryData where
         mapM_ g es
 
     get = do
-        ms <- mapM (\idx -> mapM (\_ -> getWord8) [1..256] >>= return.(\n->(idx,takeWhile (/= 0) n))) [0..15*11*11*11-1] 
-        return $ BinaryData (array (0,15*11*11*11-1) ms)
+        ms <- mapM (\idx -> mapM (\_ -> getWord8) [1..256] >>= return.(\n->(InitCode idx,takeWhile (/= 0) n))) [0..15*11*11*11-1] 
+        return $ BinaryData (array (InitCode 0,InitCode (15*11*11*11-1)) ms)

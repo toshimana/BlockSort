@@ -15,6 +15,7 @@ import FloorNodes
 import StartPoint
 import EndPoint
 import BinaryData
+import InitCode
 
 type BlockPosition = Array BlockColor Node
 type BlockGraph = Gr BlockColor Float
@@ -139,16 +140,16 @@ revYellowIndices = revIndices yellowIndices
 revBlueIndices :: [Int]
 revBlueIndices = revIndices blueIndices
 
-toInitCode :: BlockPosition -> Int
+toInitCode :: BlockPosition -> InitCode
 toInitCode bp = 
     let blackP = bp A.! Black in
     let redP = fromJust $ redIndices !! ((bp A.! Red)-1) in
     let yellowP = fromJust $ yellowIndices !! ((bp A.! Yellow)-1) in
     let blueP = fromJust $ blueIndices !! ((bp A.! Blue)-1) in
-    (blackP-1)*11*11*11+(redP-1)*11*11+(yellowP-1)*11+(blueP-1)
+    InitCode $ (blackP-1)*11*11*11+(redP-1)*11*11+(yellowP-1)*11+(blueP-1)
 
-fromInitCode :: Int -> Int -> BlockPosition
-fromInitCode gp code = 
+fromInitCode :: Node -> InitCode -> BlockPosition
+fromInitCode gp (InitCode code) = 
     let kp = div code (11*11*11) + 1 in
     let rp = revRedIndices !! (mod (div code (11*11)) 11) in
     let yp = revYellowIndices !! (mod (div code 11) 11) in
@@ -352,9 +353,9 @@ getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bp
 calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]
 calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 23] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
 
-createRootFromCode :: Int -> Float -> Int -> [Word8]
-createRootFromCode gp cost n = 
-    let bp = fromInitCode gp n in 
+createRootFromCode :: Node -> Float -> InitCode -> [Word8]
+createRootFromCode gp cost code = 
+    let bp = fromInitCode gp code in 
     if isInitBlockPosition bp then g cost (calcTargetRoot (StartPoint 17) (EndPoint 18) bp) else []
         where
             g :: Float -> [(Int,Float,[Node],BlockPosition)] -> [Word8]
@@ -362,8 +363,8 @@ createRootFromCode gp cost n =
                 let fs = L.filter (\(_,c,_,_) -> c <= cost) xs in 
                 if L.null fs then [] else let (_,_,r,_) = head (sort fs) in L.map fromIntegral r
         
-createBinary :: Int -> Float -> BinaryData
+createBinary :: Node -> Float -> BinaryData
 createBinary greenPos maxCost = 
-    let bps = L.map (\n -> (n,createRootFromCode greenPos maxCost n)) [0..15*11*11*11-1] in
-    BinaryData $ array (0,15*11*11*11-1) bps
+    let bps = L.map (\n -> let code = InitCode n in (code,createRootFromCode greenPos maxCost code)) [0..15*11*11*11-1] in
+    BinaryData $ array (InitCode 0,InitCode (15*11*11*11-1)) bps
 

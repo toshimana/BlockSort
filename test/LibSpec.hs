@@ -9,6 +9,7 @@ import Lib
 import BlockColor
 import StartPoint
 import EndPoint
+import InitCode
 
 spec :: Spec
 spec = do
@@ -35,21 +36,17 @@ spec = do
 
         it "sample09" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
-            calcTargetRoot 17 11 bns `shouldBe` []
+            calcTargetRoot (StartPoint 17) (EndPoint 18) bns `shouldBe` []
             
         it "sample10" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
-            getAnswerList 17 11 bns 20 `shouldBe` Nothing
+            getAnswerList (StartPoint 17) (EndPoint 18) bns 20 `shouldBe` Nothing
         
         it "sample11" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
             let ls = fromJust (find (\xs -> fst (head xs) == 20) answerList)
             let (_,xs) = ls !! 17
-<<<<<<< HEAD
-            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 17) (EndPoint 11) `shouldBe` Nothing
-=======
-            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 10) (EndPoint 11) `shouldBe` Nothing
->>>>>>> 6f07d9e1b2b49d5af075e06726b58fd7ec4e744a
+            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 17) (EndPoint 18) `shouldBe` Nothing
 
         it "sample12" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,10)]
@@ -61,10 +58,10 @@ spec = do
             
     describe "toInitCode" $ do
         it "sample01" $ do
-            toInitCode (array (Red,Black) [(Red,15),(Blue,14),(Yellow,12),(Black,13)])`shouldBe` (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
+            toInitCode (array (Red,Black) [(Red,15),(Blue,14),(Yellow,12),(Black,13)])`shouldBe` InitCode ((13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1))
         
         it "sample02" $ do
-            let code = (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
+            let code = InitCode $ (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
             fromInitCode 1 code `shouldBe` (array (Red,Black) [(Red,15),(Green,1),(Blue,14),(Yellow,12),(Black,13)])
 
         it "sample03" $ do
@@ -72,7 +69,7 @@ spec = do
             fromInitCode 1 (toInitCode arr) `shouldBe` arr
 
         it "sample04" $ do
-            let code = (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
+            let code = InitCode $ (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
             toInitCode (fromInitCode 1 code) `shouldBe` code
     
     describe "isDeadLock" $ do
