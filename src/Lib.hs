@@ -27,7 +27,7 @@ node_color_list :: [(Node, BlockColor)]
 node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow), (16,None)]
 
 middle_node_list :: [(Node, BlockColor)]
-middle_node_list = L.map (\n -> (n,None)) [19..44]
+middle_node_list = L.map (\n -> (n,None)) [17..44]
 
 node_color_map :: Map Node BlockColor
 node_color_map = M.fromList node_color_list
@@ -66,11 +66,15 @@ graph_middle_edge_list =
     ,(12,36,h3),(12,40,h3),(12,42,h3)
     ,(13,37,h3),(13,42,h3),(13,43,h4)
     ,(14,38,h3),(14,43,h4),(14,44,h3)
-    ,(15,39,h3),(15,41,h3),(15,44,h3)]
+    ,(15,39,h3),(15,41,h3),(15,44,h3)
+    ,(17,10,19.15)
+    ,(18,11,40.17)]
 
 graph_middle_middle_edge_list :: [LEdge Float]
 graph_middle_middle_edge_list = 
-    [(19,22,h3),(19,23,h3)
+    [(17,28,47.34),(17,40,29.546)
+    ,(18,29,34.655)
+    ,(19,22,h3),(19,23,h3)
     ,(20,24,h3),(20,25,h3)
     ,(21,26,h3),(21,27,h3)
     ,(22,23,h1),(22,28,h3),(22,34,h2)
@@ -351,7 +355,7 @@ calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 23] -- getAnswerList
 createRootFromCode :: Int -> Float -> Int -> [Word8]
 createRootFromCode gp cost n = 
     let bp = fromInitCode gp n in 
-    if isInitBlockPosition bp then g cost (calcTargetRoot 10 11 bp) else []
+    if isInitBlockPosition bp then g cost (calcTargetRoot 17 18 bp) else []
         where
             g :: Float -> [(Int,Float,[Node],BlockPosition)] -> [Word8]
             g cost xs = 

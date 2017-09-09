@@ -44,7 +44,7 @@ generateRootCSVLine f sp ep bp =
 
 main :: IO ()
 main = do
-    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 10 11) blockArray
+    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot 17 18) blockArray
 --    print $ createBinary 1 4000.0
 --    encodeFile "root.bin" $ createBinary 1 4000.0
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
