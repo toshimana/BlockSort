@@ -45,8 +45,7 @@ spec = do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
             let ls = fromJust (find (\xs -> fst (head xs) == 20) answerList)
             let (_,xs) = ls !! 17
-            [xs] `shouldBe` []
---            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 10) (EndPoint 11) `shouldBe` Nothing
+            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 10) (EndPoint 11) `shouldBe` Nothing
 
         it "sample12" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,10)]

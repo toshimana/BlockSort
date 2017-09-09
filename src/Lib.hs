@@ -187,30 +187,32 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
     let noblock_ude = cuttingEdge ude poe in
     let g = createGraph fn noblock_ude in
     let current_block_point = bp A.! bc in
-    case searchShortPath startPoint (EndPoint current_block_point) g of
-        Nothing -> []
-        Just (departRoot, departCost) ->
-            if (bc,bcn) == (Black,16) then searchCenter fn ude poe departRoot departCost current_block_point 
-            else searchRoundRoot g departRoot departCost current_block_point bcn
-            where
-                f :: Node -> Node -> [(Path,Float,BlockPosition)]
-                f e backNode = solveTarget fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
-                searchRoundRoot :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
-                searchRoundRoot g departRoot departCost s e = 
-                    case searchShortPath (StartPoint s) (EndPoint e) g of
-                        Nothing -> []
-                        Just (returnRoot, returnCost) ->
-                            let moveRoot = departRoot ++ (tail returnRoot) in
-                            let moveCost = departCost + returnCost in
-                            let backNode = last (init moveRoot) in
-                            let currentRoot = moveRoot ++ [backNode] in
-                            let currentCost = maybe 0 ((+) moveCost) (spLength e backNode g) in
-                            B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) (f e backNode)
-                searchCenter :: FloorNodes -> FloorUnDirectedEdges -> PointsOfBlock -> [Node] -> Float -> Node -> [(Path,Float,BlockPosition)]
-                searchCenter fn ude poe departRoot departCost s = 
-                    let noblock_ude = cuttingEdge (append_graph_edges ude graph_edges_with_center) poe in
-                    let g = createGraph fn noblock_ude in
-                    searchRoundRoot g departRoot departCost s 16
+    let departEndPoint = EndPoint current_block_point in
+    if current_block_point == bcn then solveTarget fn ude bp cl startPoint endPoint
+    else case searchShortPath startPoint departEndPoint g of
+            Nothing -> []
+            Just (departRoot, departCost) ->
+                if (bc,bcn) == (Black,16) then searchCenter fn ude poe departRoot departCost current_block_point 
+                else searchRoundRoot g departRoot departCost current_block_point bcn
+                where
+                    f :: Node -> Node -> [(Path,Float,BlockPosition)]
+                    f e backNode = solveTarget fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
+                    searchRoundRoot :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
+                    searchRoundRoot g departRoot departCost s e = 
+                        case searchShortPath (StartPoint s) (EndPoint e) g of
+                            Nothing -> []
+                            Just (returnRoot, returnCost) ->
+                                let moveRoot = departRoot ++ (tail returnRoot) in
+                                let moveCost = departCost + returnCost in
+                                let backNode = last (init moveRoot) in
+                                let currentRoot = moveRoot ++ [backNode] in
+                                let currentCost = maybe 0 ((+) moveCost) (spLength e backNode g) in
+                                B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) (f e backNode)
+                    searchCenter :: FloorNodes -> FloorUnDirectedEdges -> PointsOfBlock -> [Node] -> Float -> Node -> [(Path,Float,BlockPosition)]
+                    searchCenter fn ude poe departRoot departCost s = 
+                        let noblock_ude = cuttingEdge (append_graph_edges ude graph_edges_with_center) poe in
+                        let g = createGraph fn noblock_ude in
+                        searchRoundRoot g departRoot departCost s 16
 
 solveTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 solveTarget fn ude bp [] startPoint endPoint = maybeToList (gotoend fn ude bp startPoint endPoint)
