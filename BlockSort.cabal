@@ -19,6 +19,8 @@ library
                      , BlockColor
                      , BinaryData
                      , InitCode
+                     , GraphConstants
+                     , BonusPoint
   build-depends:       base >= 4.7 && < 5
                      , binary
                      , containers

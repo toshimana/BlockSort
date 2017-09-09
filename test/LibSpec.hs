@@ -8,6 +8,7 @@ import Data.Maybe
 import Lib
 import BlockColor
 import InitCode
+import GraphConstants
 
 spec :: Spec
 spec = do

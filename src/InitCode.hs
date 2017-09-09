@@ -6,8 +6,6 @@ import Data.Graph.Inductive.Graph
 
 import BlockColor
 
-type BlockPosition = Array BlockColor Node
-
 newtype InitCode = InitCode Int deriving (Ix,Ord,Eq,Show)
 
 instance Bounded InitCode where
