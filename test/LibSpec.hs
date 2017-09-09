@@ -66,4 +66,12 @@ spec = do
         it "sample04" $ do
             let code = (13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1)
             toInitCode (fromInitCode 1 code) `shouldBe` code
-            
+    
+    describe "isDeadLock" $ do
+        it "sample01" $ do
+            let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
+            isDeadLock [] [(Blue,2),(Red,1)] arr 2 `shouldBe` True
+
+        it "sample02" $ do
+            let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
+            isDeadLock [2] [(Blue,2),(Red,1)] arr 1 `shouldBe` True            

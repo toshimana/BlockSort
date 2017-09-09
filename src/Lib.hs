@@ -1,4 +1,4 @@
-module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray) where
+module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock) where
 
 import Data.Array as A
 import Data.Map as M
@@ -239,6 +239,17 @@ getColorNode (FloorNodes fn) Black = L.map (\(e,_) -> e) fn
 getColorNode (FloorNodes fn) color = 
     L.foldl' (\cur -> \(e,c) -> if c == color then e:cur else cur) [] fn
 
+isDeadLock :: [Node] -> [(BlockColor, Node)] -> BlockPosition -> Node -> Bool
+isDeadLock checked cl bp e = if L.elem e checked then True
+    else let nodes = L.filter (\n -> snd n == e) (A.assocs bp) in 
+        if L.null nodes then False
+        else let target = head nodes in
+            let next = L.find (\(c,n) -> fst target == c) cl in
+            maybe False (\(_,n) -> isDeadLock (e:checked) cl bp n) next
+
+findEscapeNode :: Node
+findEscapeNode = undefined 
+
 processBlockTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 processBlockTarget fn ude bp cl bc bcn startPoint endPoint = 
     let poe = PointsOfBlock $ S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
@@ -257,6 +268,21 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
                     f e backNode = solveTarget fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
                     searchRoundRoot :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
                     searchRoundRoot g departRoot departCost s e = 
+                        if isDeadLock [] ((bcn,e):cl) bp e
+                        then let escapePoint = findEscapeNode in
+                            case searchShortPath (StartPoint s) (EndPoint escapePoint) g of
+                                Nothing -> []
+                                Just (returnRoot, returnCost) -> 
+                                    let moveRoot = departRoot ++ (tail returnRoot) in
+                                    let moveCost = departCost + returnCost in
+                                    let backNode = last (init moveRoot) in
+                                    let currentRoot = moveRoot ++ [backNode] in
+                                    let currentCost = maybe 0 ((+) moveCost) (spLength e backNode g) in
+                                    let restSolve = solveTarget fn ude (bp // [(bc,escapePoint)]) ((bc,bcn):cl) (StartPoint backNode) endPoint in
+                                    B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
+                        else searchRoundRoot_ g departRoot departCost s e
+                    searchRoundRoot_ :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
+                    searchRoundRoot_ g departRoot departCost s e = 
                         case searchShortPath (StartPoint s) (EndPoint e) g of
                             Nothing -> []
                             Just (returnRoot, returnCost) ->
@@ -270,7 +296,7 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
                     searchCenter fn ude poe departRoot departCost s = 
                         let noblock_ude = cuttingEdge (append_graph_edges ude graph_edges_with_center) poe in
                         let g = createGraph fn noblock_ude in
-                        searchRoundRoot g departRoot departCost s 16
+                        searchRoundRoot_ g departRoot departCost s 16
 
 solveTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
 solveTarget fn ude bp [] startPoint endPoint = maybeToList (gotoend fn ude bp startPoint endPoint)
