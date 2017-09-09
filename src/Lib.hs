@@ -1,4 +1,4 @@
-module Lib (BlockPosition, node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode) where
+module Lib (BlockPosition, StartPoint(..), EndPoint(..), node_color_map, graph_nodes, graph_edges, toInitCode, fromInitCode, calcBonusPoint, processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode) where
 
 import Data.Array as A
 import Data.Map as M
@@ -12,8 +12,6 @@ import Data.Graph.Inductive.Query.SP
 
 import BlockColor
 import FloorNodes
-import StartPoint
-import EndPoint
 import BinaryData
 import InitCode
 
@@ -23,6 +21,9 @@ type BlockGraph = Gr BlockColor Float
 data PointsOfBlock = PointsOfBlock (Set Node)
 data FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
 data FloorDirectedEdges = FloorDirectedEdges [LEdge Float]
+
+newtype StartPoint = StartPoint Node
+newtype EndPoint = EndPoint Node
 
 node_color_list :: [(Node, BlockColor)]
 node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow), (16,None)]

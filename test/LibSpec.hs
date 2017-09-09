@@ -7,8 +7,6 @@ import Data.Maybe
 
 import Lib
 import BlockColor
-import StartPoint
-import EndPoint
 import InitCode
 
 spec :: Spec

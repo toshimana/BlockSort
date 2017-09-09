@@ -12,8 +12,6 @@ import Data.Graph.Inductive.Graph
 import Lib
 import BlockColor
 import FloorNodes
-import StartPoint
-import EndPoint
 import BinaryData
 
 answerListCSV :: [[String]]
