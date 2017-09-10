@@ -12,13 +12,14 @@ import Data.Graph.Inductive.Graph
 import Lib
 import BlockColor
 import BinaryData
+import BonusPoint
 
 answerListCSV :: [[String]]
 answerListCSV = L.map f answerList
     where
-        f :: [(Int,BlockPosition)] -> [String]
+        f :: [(BonusPoint,BlockPosition)] -> [String]
         f xs = (show (fst (head xs))) : (show (length xs)) : (L.map g xs)
-        g :: (Int,BlockPosition) -> String
+        g :: (BonusPoint,BlockPosition) -> String
         g (_,bp) = show (A.elems bp)
 
 compareResult :: (Int, Float, Path, BlockPosition) -> (Int, Float, Path, BlockPosition) -> Ordering
@@ -29,10 +30,10 @@ compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
     | d2 < d1 = GT
     | otherwise = compare (p1,bp1) (p2,bp2)
 
-dummyArray :: Array Int (Maybe Float)
-dummyArray = array (20,25) [(i,Nothing) | i <- [20..25]]
+dummyArray :: Array BonusPoint (Maybe Float)
+dummyArray = array (BonusPoint 20,BonusPoint 25) [(BonusPoint i,Nothing) | i <- [20..25]]
 
-generateRootCSVLine :: (StartPoint -> EndPoint -> BlockPosition -> [(Int,Float,[Node],BlockPosition)]) -> StartPoint -> EndPoint -> BlockPosition -> [String]
+generateRootCSVLine :: (StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Float,[Node],BlockPosition)]) -> StartPoint -> EndPoint -> BlockPosition -> [String]
 generateRootCSVLine f sp ep bp = 
     let xs = f sp ep bp in
     let ys = L.map (\(a,b,_,_) -> (a, Just b)) xs in

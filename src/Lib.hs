@@ -151,7 +151,7 @@ blockArrayRaw = L.map (\xs -> listArray (Red,Black) xs) blockListRaw
 blockArray :: [BlockPosition]
 blockArray = L.map (\xs -> listArray (Red,Black) xs) blockList
 
-answerList :: [[(Int,BlockPosition)]]
+answerList :: [[(BonusPoint,BlockPosition)]]
 answerList = reverse $ groupBy (\(l,_)-> \(r,_)-> l==r) $ sort $ L.map (\n -> (calcBonusPoint graph_nodes n,n)) blockArrayRaw
 
 isInitBlockPosition :: BlockPosition -> Bool
@@ -164,21 +164,21 @@ isBlockConstraint :: [Int] -> Bool
 isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
 isBlockConstraint xs = False
 
-getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> Int -> Maybe (Int, Float, Path, BlockPosition)
+getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> BonusPoint -> Maybe (BonusPoint, Float, Path, BlockPosition)
 getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
     where
-        f :: [BlockPosition] -> Int -> Maybe (Int,Float,Path,BlockPosition)
+        f :: [BlockPosition] -> BonusPoint -> Maybe (BonusPoint,Float,Path,BlockPosition)
         f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs sp ep) 
 
-calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(Int,Float,Path,BlockPosition)]
-calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp 23] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
+calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Float,Path,BlockPosition)]
+calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp (BonusPoint 23)] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
 
 createRootFromCode :: Node -> Float -> InitCode -> [Word8]
 createRootFromCode gp cost code = 
     let bp = fromInitCode gp code in 
     if isInitBlockPosition bp then g cost (calcTargetRoot (StartPoint 17) (EndPoint 18) bp) else []
         where
-            g :: Float -> [(Int,Float,[Node],BlockPosition)] -> [Word8]
+            g :: Float -> [(BonusPoint,Float,[Node],BlockPosition)] -> [Word8]
             g cost xs = 
                 let fs = L.filter (\(_,c,_,_) -> c <= cost) xs in 
                 if L.null fs then [] else let (_,_,r,_) = head (sort fs) in L.map fromIntegral r

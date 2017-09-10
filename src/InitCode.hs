@@ -25,7 +25,7 @@ blueIndices :: [Maybe Int]
 blueIndices = [Just 1,Nothing,Just 2,Nothing,Just 3,Just 4,Just 5,Just 6,Nothing,Just 7,Just 8,Nothing,Just 9,Just 10,Just 11]
 
 revIndices :: [Maybe Int] -> [Int]
-revIndices indices = map snd $ filter (\(a,_) -> isJust a) $ zip indices [1..]
+revIndices indices = map snd $ filter (isJust.fst) $ zip indices [1..]
 
 revRedIndices :: [Int]
 revRedIndices = revIndices redIndices
