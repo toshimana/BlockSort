@@ -1,4 +1,4 @@
-module Lib (StartPoint(..), EndPoint(..), processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode) where
+module Lib (StartPoint(..), EndPoint(..), Cost(..), processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode) where
 
 import Data.Array as A
 import Data.Map as M
@@ -16,13 +16,27 @@ import InitCode
 import BonusPoint
 import GraphConstants
 
-type BlockGraph = Gr BlockColor Float
+type BlockGraph = Gr BlockColor Cost
 
 data PointsOfBlock = PointsOfBlock (Set Node)
 data FloorDirectedEdges = FloorDirectedEdges [LEdge Float]
 
 newtype StartPoint = StartPoint Node
 newtype EndPoint = EndPoint Node
+
+newtype Cost = Cost Float deriving (Ord,Eq,Show)
+
+instance Num Cost where
+    (+) (Cost a) (Cost b) = Cost (a+b)
+    (-) (Cost a) (Cost b) = Cost (a-b)
+    (*) (Cost a) (Cost b) = Cost (a*b)
+    negate (Cost a) = Cost (negate a)
+    abs (Cost a) = Cost (abs a)
+    signum (Cost a) = Cost (signum a)
+    fromInteger a = Cost (fromInteger a)
+
+instance Real Cost where
+    toRational (Cost a) = toRational a
 
 append_graph_edges :: FloorUnDirectedEdges -> FloorUnDirectedEdges -> FloorUnDirectedEdges
 append_graph_edges (FloorUnDirectedEdges l) (FloorUnDirectedEdges r) = FloorUnDirectedEdges (l++r)
@@ -34,7 +48,7 @@ convertDirectedEdges (FloorUnDirectedEdges edges) =
 createGraph :: FloorNodes -> FloorUnDirectedEdges -> BlockGraph
 createGraph (FloorNodes nodes) unDirectedEdges = 
     let (FloorDirectedEdges directedEdges) = convertDirectedEdges unDirectedEdges in
-    mkGraph nodes directedEdges
+    mkGraph nodes (L.map (\(a,b,c) -> (a,b,Cost c)) directedEdges)
 
 cuttingEdge :: FloorUnDirectedEdges -> PointsOfBlock -> FloorUnDirectedEdges
 cuttingEdge (FloorUnDirectedEdges ude) (PointsOfBlock poe) =
@@ -44,13 +58,13 @@ cuttingNodes :: FloorNodes -> PointsOfBlock -> FloorNodes
 cuttingNodes (FloorNodes fn) (PointsOfBlock poe) =
     FloorNodes $ L.filter (\(n,_) -> not (S.member n poe)) fn
 
-searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Float)
+searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
     case (sp startPoint endPoint g, spLength startPoint endPoint g) of
         (Just path, Just cost) -> Just (path, cost)
         (_, _) -> Nothing
 
-gotoend :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> Maybe (Path,Float,BlockPosition)
+gotoend :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> StartPoint -> EndPoint -> Maybe (Path,Cost,BlockPosition)
 gotoend fn ude bp startPoint endPoint = 
     let poe = PointsOfBlock $ S.fromList (A.elems bp) in
     let noblock_ude = cuttingEdge ude poe in
@@ -72,7 +86,7 @@ isDeadLock checked cl bp e = if L.elem e checked then True
             let next = L.find (\(c,n) -> fst target == c) cl in
             maybe False (\(_,n) -> isDeadLock (e:checked) cl bp n) next
 
-findEscapeNode :: BlockGraph -> BlockPosition -> [(BlockColor, Node)] -> Node -> (Path, Float)
+findEscapeNode :: BlockGraph -> BlockPosition -> [(BlockColor, Node)] -> Node -> (Path, Cost)
 findEscapeNode g bp cl s = let onboardnodes = A.elems bp in 
     let targetnodes = L.map snd cl in
     let checknodes = onboardnodes ++ targetnodes in
@@ -80,7 +94,7 @@ findEscapeNode g bp cl s = let onboardnodes = A.elems bp in
     let ms = catMaybes $ L.map (\e -> searchShortPath (StartPoint s) (EndPoint e) g) nodes in
     head $ L.sortBy (\(_,l) -> \(_,r) -> compare l r) ms
 
-processBlockTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
+processBlockTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
 processBlockTarget fn ude bp cl bc bcn startPoint endPoint = 
     let poe = PointsOfBlock $ S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
     let noblock_ude = cuttingEdge ude poe in
@@ -94,9 +108,9 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
                 if (bc,bcn) == (Black,16) then searchCenter fn ude poe departRoot departCost current_block_point 
                 else searchRoundRoot g departRoot departCost current_block_point bcn
                 where
-                    f :: Node -> Node -> [(Path,Float,BlockPosition)]
+                    f :: Node -> Node -> [(Path,Cost,BlockPosition)]
                     f e backNode = solveTarget fn ude (bp // [(bc,e)]) cl (StartPoint backNode) endPoint
-                    searchRoundRoot :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
+                    searchRoundRoot :: BlockGraph -> [Node] -> Cost -> Node -> Node -> [(Path,Cost,BlockPosition)]
                     searchRoundRoot g departRoot departCost s e = let currentCl = (bc,e):cl in
                         if isDeadLock [] currentCl bp e
                         then let (returnRoot, returnCost) = findEscapeNode g bp currentCl s in
@@ -109,7 +123,7 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
                                 let restSolve = solveTarget fn ude (bp // [(bc,escapeNode)]) ((bc,bcn):cl) (StartPoint backNode) endPoint in
                                 B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
                         else searchRoundRoot_ g departRoot departCost s e
-                    searchRoundRoot_ :: BlockGraph -> [Node] -> Float -> Node -> Node -> [(Path,Float,BlockPosition)]
+                    searchRoundRoot_ :: BlockGraph -> [Node] -> Cost -> Node -> Node -> [(Path,Cost,BlockPosition)]
                     searchRoundRoot_ g departRoot departCost s e = 
                         case searchShortPath (StartPoint s) (EndPoint e) g of
                             Nothing -> []
@@ -120,23 +134,23 @@ processBlockTarget fn ude bp cl bc bcn startPoint endPoint =
                                 let currentRoot = moveRoot ++ [backNode] in
                                 let currentCost = maybe 0 ((+) moveCost) (spLength e backNode g) in
                                 B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) (f e backNode)
-                    searchCenter :: FloorNodes -> FloorUnDirectedEdges -> PointsOfBlock -> [Node] -> Float -> Node -> [(Path,Float,BlockPosition)]
+                    searchCenter :: FloorNodes -> FloorUnDirectedEdges -> PointsOfBlock -> [Node] -> Cost -> Node -> [(Path,Cost,BlockPosition)]
                     searchCenter fn ude poe departRoot departCost s = 
                         let noblock_ude = cuttingEdge (append_graph_edges ude graph_edges_with_center) poe in
                         let g = createGraph fn noblock_ude in
                         searchRoundRoot_ g departRoot departCost s 16
 
-solveTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Float,BlockPosition)]
+solveTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
 solveTarget fn ude bp [] startPoint endPoint = maybeToList (gotoend fn ude bp startPoint endPoint)
 solveTarget fn ude bp unprocessBlocks startPoint endPoint = 
     concatMap (\p@(color,node) -> processBlockTarget fn ude bp (L.delete p unprocessBlocks) color node startPoint endPoint) unprocessBlocks
 
-calcOptimizedRootTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [BlockPosition] -> StartPoint -> EndPoint -> Maybe (Path,Float,BlockPosition)
+calcOptimizedRootTarget :: FloorNodes -> FloorUnDirectedEdges -> BlockPosition -> [BlockPosition] -> StartPoint -> EndPoint -> Maybe (Path,Cost,BlockPosition)
 calcOptimizedRootTarget fn ude bp tblist startPoint endPoint = 
     let ans = L.concatMap f tblist in
     if L.null ans then Nothing else Just (minimumBy (\(_,l,_) -> \(_,r,_) -> compare l r) ans)
     where
-        f :: BlockPosition -> [(Path,Float,BlockPosition)]
+        f :: BlockPosition -> [(Path,Cost,BlockPosition)]
         f tb = let bplist = A.assocs tb in solveTarget fn ude bp bplist startPoint endPoint
         
 blockListRaw :: [[Int]]
@@ -164,26 +178,26 @@ isBlockConstraint :: [Int] -> Bool
 isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
 isBlockConstraint xs = False
 
-getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> BonusPoint -> Maybe (BonusPoint, Float, Path, BlockPosition)
+getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> BonusPoint -> Maybe (BonusPoint, Cost, Path, BlockPosition)
 getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
     where
-        f :: [BlockPosition] -> BonusPoint -> Maybe (BonusPoint,Float,Path,BlockPosition)
+        f :: [BlockPosition] -> BonusPoint -> Maybe (BonusPoint,Cost,Path,BlockPosition)
         f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget graph_nodes graph_edges bp xs sp ep) 
 
-calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Float,Path,BlockPosition)]
+calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Cost,Path,BlockPosition)]
 calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp (BonusPoint 23)] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
 
-createRootFromCode :: Node -> Float -> InitCode -> [Word8]
+createRootFromCode :: Node -> Cost -> InitCode -> [Word8]
 createRootFromCode gp cost code = 
     let bp = fromInitCode gp code in 
     if isInitBlockPosition bp then g cost (calcTargetRoot (StartPoint 17) (EndPoint 18) bp) else []
         where
-            g :: Float -> [(BonusPoint,Float,[Node],BlockPosition)] -> [Word8]
+            g :: Cost -> [(BonusPoint,Cost,[Node],BlockPosition)] -> [Word8]
             g cost xs = 
                 let fs = L.filter (\(_,c,_,_) -> c <= cost) xs in 
                 if L.null fs then [] else let (_,_,r,_) = head (sort fs) in L.map fromIntegral r
         
-createBinary :: Node -> Float -> BinaryData
+createBinary :: Node -> Cost -> BinaryData
 createBinary greenPos maxCost = 
     let bps = L.map (\n -> (n,createRootFromCode greenPos maxCost n)) allInitCode in
     BinaryData $ array (minBound, maxBound) bps

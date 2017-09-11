@@ -22,7 +22,7 @@ answerListCSV = L.map f answerList
         g :: (BonusPoint,BlockPosition) -> String
         g (_,bp) = show (A.elems bp)
 
-compareResult :: (Int, Float, Path, BlockPosition) -> (Int, Float, Path, BlockPosition) -> Ordering
+compareResult :: (Int, Cost, Path, BlockPosition) -> (Int, Cost, Path, BlockPosition) -> Ordering
 compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
     | r1 < r2 = GT
     | r2 < r1 = LT
@@ -30,10 +30,10 @@ compareResult (r1,d1,p1,bp1) (r2,d2,p2,bp2)
     | d2 < d1 = GT
     | otherwise = compare (p1,bp1) (p2,bp2)
 
-dummyArray :: Array BonusPoint (Maybe Float)
+dummyArray :: Array BonusPoint (Maybe Cost)
 dummyArray = array (BonusPoint 20,BonusPoint 25) [(BonusPoint i,Nothing) | i <- [20..25]]
 
-generateRootCSVLine :: (StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Float,[Node],BlockPosition)]) -> StartPoint -> EndPoint -> BlockPosition -> [String]
+generateRootCSVLine :: (StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Cost,[Node],BlockPosition)]) -> StartPoint -> EndPoint -> BlockPosition -> [String]
 generateRootCSVLine f sp ep bp = 
     let xs = f sp ep bp in
     let ys = L.map (\(a,b,_,_) -> (a, Just b)) xs in
