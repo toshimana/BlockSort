@@ -9,51 +9,32 @@ import Lib
 import BlockColor
 import InitCode
 import GraphConstants
+import BonusPoint
 
 spec :: Spec
 spec = do
     describe "solve" $ do
-        it "sample04" $ do
-            let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,5)]
-            [calcOptimizedRootTarget bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
-            
-        it "sample05" $ do
-            let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,5)]
-            solveTarget bns [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)] (StartPoint 10) (EndPoint 11) `shouldBe` []
-            
-        it "sample06" $ do
-            let bns = array (Red,Black) [(Red,1),(Green,10),(Blue,3),(Yellow,5),(Black,16)]
-            processBlockTarget bns [] Blue 2 (StartPoint 2) (EndPoint 11) `shouldBe` []
-            
-        it "sample07" $ do
-            let bns = array (Red,Black) [(Red,1),(Green,10),(Blue,3),(Yellow,4),(Black,16)]
-            processBlockTarget bns [(Blue,2)] Yellow 5 (StartPoint 5) (EndPoint 11) `shouldBe` []
-            
-        it "sample08" $ do
-            let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            [calcOptimizedRootTarget bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
-
         it "sample09" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
-            calcTargetRoot (StartPoint 17) (EndPoint 18) bns `shouldBe` []
+            calcTargetRoot (StartPoint 17) (EndPoint 18) bns `shouldBe` [(BonusPoint 23,Cost 1105.282,[17,10,34,30,8,30,5,22,1,22,23,24,6,24,2,24,31,37,43,14,43,38,32,25,3,26,33,9,33,7,27,4,27,7,33,39,38,43,13,43,38,39,41,11,18],array (Red,Black) [(Red,14),(Green,6),(Blue,9),(Yellow,13),(Black,8)])]
             
         it "sample10" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
-            getAnswerList (StartPoint 17) (EndPoint 18) bns 20 `shouldBe` Nothing
+            getAnswerList (StartPoint 17) (EndPoint 18) bns 20 `shouldBe` Just (BonusPoint 20,Cost 962.84503,[17,28,1,22,5,30,31,32,33,35,11,35,29,4,27,7,33,9,33,26,3,21,4,21,26,33,9,32,25,3,25,24,2,20,25,26,7,26,27,29,18],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)])
         
         it "sample11" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
             let ls = fromJust (find (\xs -> fst (head xs) == 20) answerList)
             let (_,xs) = ls !! 17
-            calcOptimizedRootTarget bns [xs] (StartPoint 17) (EndPoint 18) `shouldBe` Nothing
+            calcOptimizedRootTarget bns [xs] (StartPoint 17) (EndPoint 18) `shouldBe` Just ([17,28,1,22,5,30,31,32,33,35,11,35,29,4,27,7,33,9,33,26,3,21,4,21,26,33,9,32,25,3,25,24,2,20,25,26,7,26,27,29,18],Cost 962.84503,array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)])
 
         it "sample12" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,10)]
-            [calcOptimizedRootTarget bns [array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 17) (EndPoint 11)] `shouldBe` []
+            [calcOptimizedRootTarget bns [array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 17) (EndPoint 11)] `shouldBe` [Nothing]
 
         it "sample13" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            processBlockTarget bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` []
+            processBlockTarget bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` [([10,28,1,28,10,28,22,19,2,19,1,19,22,28,10,34,30,23,2,23,24,6,32,33,35,11],Cost 576.786,array (Red,Black) [(Red,1),(Green,3),(Blue,2),(Yellow,4),(Black,5)])]
             
     describe "toInitCode" $ do
         it "sample01" $ do
