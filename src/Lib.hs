@@ -52,8 +52,10 @@ createGraph (FloorNodes nodes) unDirectedEdges =
 
 cuttingEdge :: FloorUnDirectedEdges -> PointsOfBlock -> FloorUnDirectedEdges
 cuttingEdge (FloorUnDirectedEdges ude) (PointsOfBlock poe) =
-    let (tEdges, fEdges) = L.partition (\(l,r,_) -> not((S.member l poe) || (S.member r poe))) ude in
-    FloorUnDirectedEdges tEdges
+    let tEdges = L.filter (\(l,r,_) -> not((S.member l poe) || (S.member r poe))) ude in
+    let FloorUnDirectedEdges gme = graph_middle_edges in
+    let middle_edges = S.foldl' (\cur -> \p -> let s = L.foldl' (\c -> \(l,r,_) -> if l==p then S.insert r c else if r==p then S.insert l c else c) S.empty ude in cur ++ (L.filter (\(l,r,_) -> (S.member l s)&&(S.member r s)) gme)) [] poe in
+    FloorUnDirectedEdges (tEdges ++ middle_edges)
 
 searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =

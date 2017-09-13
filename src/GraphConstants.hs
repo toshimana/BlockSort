@@ -1,12 +1,16 @@
-module GraphConstants (FloorUnDirectedEdges(..), node_color_map, graph_nodes, graph_edges_with_center, graph_edges) where
+module GraphConstants (FloorUnDirectedEdges(..), floor_nodes, node_color_map, graph_nodes, graph_edges_with_center, graph_edges, graph_middle_edges) where
 
 import Data.List as L
 import Data.Map as M
+import Data.Set as S
 import Data.Graph.Inductive.Graph
 
 import BlockColor
 
 newtype FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
+
+floor_nodes :: Set Node
+floor_nodes = S.fromList [1..15]
 
 node_color_list :: [(Node, BlockColor)]
 node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow), (16,None)]
@@ -86,7 +90,10 @@ graph_edge_with_center_list = [(6,16,45),(8,16,45),(9,16,45),(13,16,45),(14,16,4
 
 graph_edges :: FloorUnDirectedEdges
 -- graph_edges = FloorUnDirectedEdges graph_edge_list
-graph_edges = FloorUnDirectedEdges $ graph_middle_edge_list ++ graph_middle_middle_edge_list
+graph_edges = FloorUnDirectedEdges $ graph_middle_edge_list
+
+graph_middle_edges :: FloorUnDirectedEdges
+graph_middle_edges = FloorUnDirectedEdges graph_middle_middle_edge_list
 
 graph_edges_with_center :: FloorUnDirectedEdges
 graph_edges_with_center = FloorUnDirectedEdges graph_edge_with_center_list
