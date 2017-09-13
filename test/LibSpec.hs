@@ -15,23 +15,23 @@ spec = do
     describe "solve" $ do
         it "sample04" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,5)]
-            [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
+            [calcOptimizedRootTarget bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
             
         it "sample05" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,5)]
-            solveTarget graph_nodes graph_edges bns [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)] (StartPoint 10) (EndPoint 11) `shouldBe` []
+            solveTarget bns [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)] (StartPoint 10) (EndPoint 11) `shouldBe` []
             
         it "sample06" $ do
             let bns = array (Red,Black) [(Red,1),(Green,10),(Blue,3),(Yellow,5),(Black,16)]
-            processBlockTarget graph_nodes graph_edges bns [] Blue 2 (StartPoint 2) (EndPoint 11) `shouldBe` []
+            processBlockTarget bns [] Blue 2 (StartPoint 2) (EndPoint 11) `shouldBe` []
             
         it "sample07" $ do
             let bns = array (Red,Black) [(Red,1),(Green,10),(Blue,3),(Yellow,4),(Black,16)]
-            processBlockTarget graph_nodes graph_edges bns [(Blue,2)] Yellow 5 (StartPoint 5) (EndPoint 11) `shouldBe` []
+            processBlockTarget bns [(Blue,2)] Yellow 5 (StartPoint 5) (EndPoint 11) `shouldBe` []
             
         it "sample08" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
+            [calcOptimizedRootTarget bns [array (Red,Black) [(Red,1),(Green,10),(Blue,2),(Yellow,5),(Black,16)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 10) (EndPoint 11)] `shouldBe` []
 
         it "sample09" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
@@ -45,15 +45,15 @@ spec = do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
             let ls = fromJust (find (\xs -> fst (head xs) == 20) answerList)
             let (_,xs) = ls !! 17
-            calcOptimizedRootTarget graph_nodes graph_edges bns [xs] (StartPoint 17) (EndPoint 18) `shouldBe` Nothing
+            calcOptimizedRootTarget bns [xs] (StartPoint 17) (EndPoint 18) `shouldBe` Nothing
 
         it "sample12" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,10)]
-            [calcOptimizedRootTarget graph_nodes graph_edges bns [array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 17) (EndPoint 11)] `shouldBe` []
+            [calcOptimizedRootTarget bns [array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,10)],array (Red,Black) [(Red,7),(Green,11),(Blue,4),(Yellow,3),(Black,16)]] (StartPoint 17) (EndPoint 11)] `shouldBe` []
 
         it "sample13" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            processBlockTarget graph_nodes graph_edges bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` []
+            processBlockTarget bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` []
             
     describe "toInitCode" $ do
         it "sample01" $ do
