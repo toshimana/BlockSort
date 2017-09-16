@@ -6,4 +6,5 @@
 *.txt
 *.prof
 *.bin
+*.zip
 .stack-work/
