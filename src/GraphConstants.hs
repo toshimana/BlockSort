@@ -4,7 +4,6 @@ import Data.List as L
 import Data.Map as M
 import Data.Set as S
 import Data.Graph.Inductive.Graph
-import Data.Vect.Float
 
 import BlockColor
 
