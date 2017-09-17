@@ -4,11 +4,11 @@ import Data.List as L
 import Data.Map as M
 import Data.Set as S
 import Data.Graph.Inductive.Graph
-import Data.Vect
+import Linear
 
 import BlockColor
 
-newtype NodeInfo = NodeInfo (BlockColor, Vec2)
+newtype NodeInfo = NodeInfo (BlockColor, V2 Float)
 newtype FloorNodes = FloorNodes [LNode NodeInfo]
 newtype FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
 
@@ -17,22 +17,22 @@ floor_nodes = S.fromList [1..15]
 
 node_list :: [(Node, NodeInfo)]
 node_list = 
-    [(1,NodeInfo(Red,Vec2 0.0 0.0))
-    ,(2,NodeInfo(Blue,Vec2 (sqrt 3.0 * 2.0) 0.0))
-    ,(3,NodeInfo(Yellow,Vec2 (sqrt 3.0 * 4.0) 0.0))
-    ,(4,NodeInfo(Blue,Vec2 (sqrt 3.0 * 6.0) 0.0))
-    ,(5,NodeInfo(Yellow,Vec2 (sqrt 3.0) 1.0))
-    ,(6,NodeInfo(Green,Vec2 (sqrt 3.0 * 3.0) 1.0))
-    ,(7,NodeInfo(Red,Vec2 (sqrt 3.0 * 5.0) 1.0))
-    ,(8,NodeInfo(Red,Vec2 (sqrt 3.0 * 2.0) 2.0))
-    ,(9,NodeInfo(Blue,Vec2 (sqrt 3.0 * 4.0) 2.0))
-    ,(10,NodeInfo(Green,Vec2 (sqrt 3.0       - 1.0) (sqrt 3.0 + 1.0)))
-    ,(11,NodeInfo(Green,Vec2 (sqrt 3.0 * 5.0 + 1.0) (sqrt 3.0 + 1.0)))
-    ,(12,NodeInfo(Blue,Vec2 (sqrt 3.0 * 2.0 - 1.0) (sqrt 3.0 + 2.0)))
-    ,(13,NodeInfo(Yellow,Vec2 (sqrt 3.0 * 2.0 + 1.0) (sqrt 3.0 + 2.0)))
-    ,(14,NodeInfo(Red,Vec2 (sqrt 3.0 * 4.0 - 1.0) (sqrt 3.0 + 2.0)))
-    ,(15,NodeInfo(Yellow,Vec2 (sqrt 3.0 * 4.0 + 1.0) (sqrt 3.0 + 2.0)))
-    ,(16,NodeInfo(None,Vec2 0.0 0.0))]
+    [(1,NodeInfo(Red,V2 0.0 0.0))
+    ,(2,NodeInfo(Blue,V2 (sqrt 3.0 * 2.0) 0.0))
+    ,(3,NodeInfo(Yellow,V2 (sqrt 3.0 * 4.0) 0.0))
+    ,(4,NodeInfo(Blue,V2 (sqrt 3.0 * 6.0) 0.0))
+    ,(5,NodeInfo(Yellow,V2 (sqrt 3.0) 1.0))
+    ,(6,NodeInfo(Green,V2 (sqrt 3.0 * 3.0) 1.0))
+    ,(7,NodeInfo(Red,V2 (sqrt 3.0 * 5.0) 1.0))
+    ,(8,NodeInfo(Red,V2 (sqrt 3.0 * 2.0) 2.0))
+    ,(9,NodeInfo(Blue,V2 (sqrt 3.0 * 4.0) 2.0))
+    ,(10,NodeInfo(Green,V2 (sqrt 3.0       - 1.0) (sqrt 3.0 + 1.0)))
+    ,(11,NodeInfo(Green,V2 (sqrt 3.0 * 5.0 + 1.0) (sqrt 3.0 + 1.0)))
+    ,(12,NodeInfo(Blue,V2 (sqrt 3.0 * 2.0 - 1.0) (sqrt 3.0 + 2.0)))
+    ,(13,NodeInfo(Yellow,V2 (sqrt 3.0 * 2.0 + 1.0) (sqrt 3.0 + 2.0)))
+    ,(14,NodeInfo(Red,V2 (sqrt 3.0 * 4.0 - 1.0) (sqrt 3.0 + 2.0)))
+    ,(15,NodeInfo(Yellow,V2 (sqrt 3.0 * 4.0 + 1.0) (sqrt 3.0 + 2.0)))
+    ,(16,NodeInfo(None,V2 0.0 0.0))]
 
 middle_node_list :: [(Node, BlockColor)]
 middle_node_list = L.map (\n -> (n,None)) [17..44]
