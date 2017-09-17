@@ -2,5 +2,5 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-extra-deps:
+extra-deps: [vect-0.4.7]
 resolver: nightly-2017-09-10

@@ -1,44 +1,47 @@
-module GraphConstants (FloorUnDirectedEdges(..), floor_nodes, node_color_map, graph_nodes, graph_edges_with_center, graph_edges, graph_middle_edges) where
+module GraphConstants (NodeInfo(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, graph_nodes, graph_edges_with_center, graph_edges, graph_middle_edges) where
 
 import Data.List as L
 import Data.Map as M
 import Data.Set as S
 import Data.Graph.Inductive.Graph
+import Data.Vect
 
 import BlockColor
 
+newtype NodeInfo = NodeInfo (BlockColor, Vec2)
+newtype FloorNodes = FloorNodes [LNode NodeInfo]
 newtype FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
 
 floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]
 
-node_color_list :: [(Node, BlockColor)]
-node_color_list = 
-    [(1,Red)
-    ,(2,Blue)
-    ,(3,Yellow)
-    ,(4,Blue)
-    ,(5,Yellow)
-    ,(6,Green)
-    ,(7,Red)
-    ,(8,Red)
-    ,(9,Blue)
-    ,(10,Green)
-    ,(11,Green)
-    ,(12,Blue)
-    ,(13,Yellow)
-    ,(14,Red)
-    ,(15,Yellow)
-    ,(16,None)]
+node_list :: [(Node, NodeInfo)]
+node_list = 
+    [(1,NodeInfo(Red,Vec2 0.0 0.0))
+    ,(2,NodeInfo(Blue,Vec2 (sqrt 3.0 * 2.0) 0.0))
+    ,(3,NodeInfo(Yellow,Vec2 (sqrt 3.0 * 4.0) 0.0))
+    ,(4,NodeInfo(Blue,Vec2 (sqrt 3.0 * 6.0) 0.0))
+    ,(5,NodeInfo(Yellow,Vec2 (sqrt 3.0) 1.0))
+    ,(6,NodeInfo(Green,Vec2 (sqrt 3.0 * 3.0) 1.0))
+    ,(7,NodeInfo(Red,Vec2 (sqrt 3.0 * 5.0) 1.0))
+    ,(8,NodeInfo(Red,Vec2 (sqrt 3.0 * 2.0) 2.0))
+    ,(9,NodeInfo(Blue,Vec2 (sqrt 3.0 * 4.0) 2.0))
+    ,(10,NodeInfo(Green,Vec2 (sqrt 3.0       - 1.0) (sqrt 3.0 + 1.0)))
+    ,(11,NodeInfo(Green,Vec2 (sqrt 3.0 * 5.0 + 1.0) (sqrt 3.0 + 1.0)))
+    ,(12,NodeInfo(Blue,Vec2 (sqrt 3.0 * 2.0 - 1.0) (sqrt 3.0 + 2.0)))
+    ,(13,NodeInfo(Yellow,Vec2 (sqrt 3.0 * 2.0 + 1.0) (sqrt 3.0 + 2.0)))
+    ,(14,NodeInfo(Red,Vec2 (sqrt 3.0 * 4.0 - 1.0) (sqrt 3.0 + 2.0)))
+    ,(15,NodeInfo(Yellow,Vec2 (sqrt 3.0 * 4.0 + 1.0) (sqrt 3.0 + 2.0)))
+    ,(16,NodeInfo(None,Vec2 0.0 0.0))]
 
 middle_node_list :: [(Node, BlockColor)]
 middle_node_list = L.map (\n -> (n,None)) [17..44]
 
 node_color_map :: Map Node BlockColor
-node_color_map = M.fromList node_color_list
+node_color_map = M.fromList (L.map (\(n,NodeInfo(c,_)) -> (n,c)) node_list)   
 
 graph_nodes :: FloorNodes
-graph_nodes = FloorNodes node_color_list
+graph_nodes = FloorNodes node_list
 --graph_nodes = FloorNodes $ node_color_list ++ middle_node_list
 
 -- l1 = 77.942

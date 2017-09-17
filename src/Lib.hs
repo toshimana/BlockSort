@@ -16,7 +16,7 @@ import InitCode
 import BonusPoint
 import GraphConstants
 
-type BlockGraph = Gr BlockColor Cost
+type BlockGraph = Gr NodeInfo Cost
 
 data PointsOfBlock = PointsOfBlock (Set Node)
 data FloorDirectedEdges = FloorDirectedEdges [LEdge Float]
@@ -75,7 +75,7 @@ gotoend bp startPoint endPoint =
 getColorNode :: FloorNodes -> BlockColor -> Path
 getColorNode (FloorNodes fn) Black = L.map (\(e,_) -> e) fn
 getColorNode (FloorNodes fn) color = 
-    L.foldl' (\cur -> \(e,c) -> if c == color then e:cur else cur) [] fn
+    L.foldl' (\cur -> \(e,NodeInfo (c,_)) -> if c == color then e:cur else cur) [] fn
 
 isDeadLock :: Path -> [(BlockColor, Node)] -> BlockPosition -> Node -> Bool
 isDeadLock checked cl bp e = if L.elem e checked then True
