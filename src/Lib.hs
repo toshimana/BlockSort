@@ -18,8 +18,8 @@ import GraphConstants
 
 type BlockGraph = Gr NodeInfo Cost
 
-data PointsOfBlock = PointsOfBlock (Set Node)
-data FloorDirectedEdges = FloorDirectedEdges [LEdge Float]
+type PointsOfBlock = Set Node
+type FloorDirectedEdges = [LEdge Float]
 
 newtype StartPoint = StartPoint Node
 newtype EndPoint = EndPoint Node
@@ -38,24 +38,20 @@ instance Num Cost where
 instance Real Cost where
     toRational (Cost a) = toRational a
 
-append_graph_edges :: FloorUnDirectedEdges -> FloorUnDirectedEdges -> FloorUnDirectedEdges
-append_graph_edges (FloorUnDirectedEdges l) (FloorUnDirectedEdges r) = FloorUnDirectedEdges (l++r)
-
 convertDirectedEdges :: FloorUnDirectedEdges -> FloorDirectedEdges
-convertDirectedEdges (FloorUnDirectedEdges edges) =
-    FloorDirectedEdges $ concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
+convertDirectedEdges edges =
+    concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
 
 createGraph :: FloorNodes -> FloorUnDirectedEdges -> BlockGraph
-createGraph (FloorNodes nodes) unDirectedEdges = 
-    let (FloorDirectedEdges directedEdges) = convertDirectedEdges unDirectedEdges in
+createGraph nodes unDirectedEdges = 
+    let directedEdges = convertDirectedEdges unDirectedEdges in
     mkGraph nodes (L.map (\(a,b,c) -> (a,b,Cost c)) directedEdges)
 
 cuttingEdge :: FloorUnDirectedEdges -> PointsOfBlock -> FloorUnDirectedEdges
-cuttingEdge (FloorUnDirectedEdges ude) (PointsOfBlock poe) =
+cuttingEdge ude poe =
     let tEdges = L.filter (\(l,r,_) -> not((S.member l poe) || (S.member r poe))) ude in
-    let FloorUnDirectedEdges gme = graph_middle_edges in
-    let middle_edges = S.foldl' (\cur -> \p -> let s = L.foldl' (\c -> \(l,r,_) -> if l==p then S.insert r c else if r==p then S.insert l c else c) S.empty ude in S.union cur (S.fromList (L.filter (\(l,r,_) -> (S.member l s)&&(S.member r s)) gme))) S.empty poe in
-    FloorUnDirectedEdges (tEdges ++ (S.toList middle_edges))
+    let middle_edges = S.foldl' (\cur -> \p -> let s = L.foldl' (\c -> \(l,r,_) -> if l==p then S.insert r c else if r==p then S.insert l c else c) S.empty ude in S.union cur (S.fromList (L.filter (\(l,r,_) -> (S.member l s)&&(S.member r s)) graph_middle_edges))) S.empty poe in
+    tEdges ++ (S.toList middle_edges)
 
 searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
@@ -65,7 +61,7 @@ searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
 
 gotoend :: BlockPosition -> StartPoint -> EndPoint -> Maybe (Path,Cost,BlockPosition)
 gotoend bp startPoint endPoint = 
-    let poe = PointsOfBlock $ S.fromList (A.elems bp) in
+    let poe = S.fromList (A.elems bp) in
     let noblock_ude = cuttingEdge graph_edges poe in
     let g = createGraph graph_nodes noblock_ude in
     case searchShortPath startPoint endPoint g of
@@ -73,8 +69,8 @@ gotoend bp startPoint endPoint =
         Nothing -> Nothing
 
 getColorNode :: FloorNodes -> BlockColor -> Path
-getColorNode (FloorNodes fn) Black = L.map (\(e,_) -> e) fn
-getColorNode (FloorNodes fn) color = 
+getColorNode fn Black = L.map (\(e,_) -> e) fn
+getColorNode fn color = 
     L.foldl' (\cur -> \(e,NodeInfo (c,_)) -> if c == color then e:cur else cur) [] fn
 
 isDeadLock :: Path -> [(BlockColor, Node)] -> BlockPosition -> Node -> Bool
@@ -113,7 +109,7 @@ searchReturnRoot bp cl bc g departRoot departCost s e endPoint =
 processReturnBlockTarget :: BlockPosition -> [(BlockColor,Node)] -> BlockColor -> Node -> BlockGraph -> Path -> Cost -> Node -> EndPoint -> [(Path,Cost,BlockPosition)]
 processReturnBlockTarget bp cl bc bcn g departRoot departCost current_block_point endPoint =
     if (bc,bcn) == (Black,16) then 
-        let poe = PointsOfBlock $ S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
+        let poe = S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
         searchCenter poe departRoot departCost current_block_point 
     else searchRoundRoot g departRoot departCost current_block_point bcn
     where
@@ -134,7 +130,7 @@ processReturnBlockTarget bp cl bc bcn g departRoot departCost current_block_poin
             else searchReturnRoot bp cl bc g departRoot departCost s e endPoint
         searchCenter :: PointsOfBlock -> Path -> Cost -> Node -> [(Path,Cost,BlockPosition)]
         searchCenter poe departRoot departCost s = 
-            let noblock_ude = cuttingEdge (append_graph_edges graph_edges graph_edges_with_center) poe in
+            let noblock_ude = cuttingEdge (graph_edges ++ graph_edges_with_center) poe in
             let g = createGraph graph_nodes noblock_ude in
             searchReturnRoot bp cl bc g departRoot departCost s 16 endPoint
 
@@ -143,7 +139,7 @@ processBlockTarget bp cl bc bcn startPoint endPoint =
     let current_block_point = bp A.! bc in
     if current_block_point == bcn then solveTarget bp cl startPoint endPoint
     else
-        let poe = PointsOfBlock $ S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
+        let poe = S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
         let noblock_ude = cuttingEdge graph_edges poe in
         let g = createGraph graph_nodes noblock_ude in
         let departEndPoint = EndPoint current_block_point in

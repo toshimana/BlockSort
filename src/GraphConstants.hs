@@ -9,13 +9,13 @@ import Linear
 import BlockColor
 
 newtype NodeInfo = NodeInfo (BlockColor, V2 Float)
-newtype FloorNodes = FloorNodes [LNode NodeInfo]
-newtype FloorUnDirectedEdges = FloorUnDirectedEdges [LEdge Float]
+type FloorNodes = [LNode NodeInfo]
+type FloorUnDirectedEdges = [LEdge Float]
 
 floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]
 
-node_list :: [(Node, NodeInfo)]
+node_list :: [LNode NodeInfo]
 node_list = 
     [(1,NodeInfo(Red,V2 0.0 0.0))
     ,(2,NodeInfo(Blue,V2 (sqrt 3.0 * 2.0) 0.0))
@@ -41,7 +41,7 @@ node_color_map :: Map Node BlockColor
 node_color_map = M.fromList (L.map (\(n,NodeInfo(c,_)) -> (n,c)) node_list)   
 
 graph_nodes :: FloorNodes
-graph_nodes = FloorNodes node_list
+graph_nodes = node_list
 --graph_nodes = FloorNodes $ node_color_list ++ middle_node_list
 
 -- l1 = 77.942
@@ -112,13 +112,13 @@ graph_edge_with_center_list :: [LEdge Float]
 graph_edge_with_center_list = [(6,16,45),(8,16,45),(9,16,45),(13,16,45),(14,16,45)]
 
 graph_edges :: FloorUnDirectedEdges
-graph_edges = FloorUnDirectedEdges graph_edge_list
+graph_edges = graph_edge_list
 -- graph_edges = FloorUnDirectedEdges $ graph_middle_edge_list
 
 graph_middle_edges :: FloorUnDirectedEdges
-graph_middle_edges = FloorUnDirectedEdges []
+graph_middle_edges = []
 -- graph_middle_edges = FloorUnDirectedEdges graph_middle_middle_edge_list
 
 graph_edges_with_center :: FloorUnDirectedEdges
-graph_edges_with_center = FloorUnDirectedEdges graph_edge_with_center_list
+graph_edges_with_center = graph_edge_with_center_list
         
