@@ -43,7 +43,8 @@ convertDirectedEdges edges =
     concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
 
 createGraph :: FloorNodes -> FloorUnDirectedEdges -> BlockGraph
-createGraph nodes unDirectedEdges = 
+createGraph nodes unDirectedEdges =
+    let (edgesHavingMiniNodes,sizeOfNodes) = L.foldl' (\(es,newid) -> \(n1,n2,c) -> (es,newid)) ([],length nodes)  unDirectedEdges in
     let directedEdges = convertDirectedEdges unDirectedEdges in
     mkGraph nodes (L.map (\(a,b,c) -> (a,b,Cost c)) directedEdges)
 
