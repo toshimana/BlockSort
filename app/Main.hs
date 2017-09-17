@@ -50,10 +50,10 @@ writeAllbin id = let file = printf "root%02d.bin" id in encodeFile file $ create
 
 main :: IO ()
 main = do
---    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot (StartPoint 17) (EndPoint 18)) blockArray
---    print $ createBinary 1 4000.0
---      encodeFile "root.bin" $ createBinary 1 4000.0
-    mapM_ writeAllbin greenBlocks
+--    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot (StartPoint 10) (EndPoint 11)) blockArray
+--    print $ createBinary 1 (Cost 80.0)
+    encodeFile "root.bin" $ createBinary 9 (Cost 1000.0)
+--    mapM_ writeAllbin greenBlocks
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList

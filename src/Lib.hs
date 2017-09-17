@@ -1,4 +1,4 @@
-module Lib (StartPoint(..), EndPoint(..), Cost(..), processBlockTarget, solveTarget, calcOptimizedRootTarget, getAnswerList, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode) where
+module Lib (StartPoint(..), EndPoint(..), Cost(..), processBlockTarget, solveTarget, calcOptimizedRootTarget, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode, targetList) where
 
 import Data.Array as A
 import Data.Map as M
@@ -85,13 +85,13 @@ isDeadLock checked cl bp e = if L.elem e checked then True
             let next = L.find (\(c,n) -> fst target == c) cl in
             maybe False (\(_,n) -> isDeadLock (e:checked) cl bp n) next
 
-findEscapeNode :: BlockGraph -> BlockPosition -> [(BlockColor, Node)] -> Node -> (Path, Cost)
+findEscapeNode :: BlockGraph -> BlockPosition -> [(BlockColor, Node)] -> Node -> Maybe (Path, Cost)
 findEscapeNode g bp cl s = let onboardnodes = A.elems bp in 
     let targetnodes = L.map snd cl in
     let checknodes = onboardnodes ++ targetnodes in
     let nodes = L.filter (\n -> not (L.elem n checknodes)) [1..15] in
     let ms = catMaybes $ L.map (\e -> searchShortPath (StartPoint s) (EndPoint e) g) nodes in
-    head $ L.sortBy (\(_,l) -> \(_,r) -> compare l r) ms
+    if L.null ms then Nothing else Just (head $ L.sortBy (\(_,l) -> \(_,r) -> compare l r) ms)
 
 
 searchNextTarget :: BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> Node -> EndPoint -> [(Path,Cost,BlockPosition)]
@@ -120,7 +120,9 @@ processReturnBlockTarget bp cl bc bcn g departRoot departCost current_block_poin
         searchRoundRoot :: BlockGraph -> Path -> Cost -> Node -> Node -> [(Path,Cost,BlockPosition)]
         searchRoundRoot g departRoot departCost s e = let currentCl = (bc,e):cl in
             if isDeadLock [] currentCl bp e
-            then let (returnRoot, returnCost) = findEscapeNode g bp currentCl s in
+            then case findEscapeNode g bp currentCl s of
+                Nothing -> []
+                Just (returnRoot, returnCost) ->
                     let moveRoot = departRoot ++ (tail returnRoot) in
                     let moveCost = departCost + returnCost in
                     let escapeNode = last moveRoot in
@@ -138,16 +140,17 @@ processReturnBlockTarget bp cl bc bcn g departRoot departCost current_block_poin
 
 processBlockTarget :: BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
 processBlockTarget bp cl bc bcn startPoint endPoint = 
-    let poe = PointsOfBlock $ S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
-    let noblock_ude = cuttingEdge graph_edges poe in
-    let g = createGraph graph_nodes noblock_ude in
     let current_block_point = bp A.! bc in
-    let departEndPoint = EndPoint current_block_point in
     if current_block_point == bcn then solveTarget bp cl startPoint endPoint
-    else case searchShortPath startPoint departEndPoint g of
-        Nothing -> []
-        Just (departRoot, departCost) ->
-            processReturnBlockTarget bp cl bc bcn g departRoot departCost current_block_point endPoint
+    else
+        let poe = PointsOfBlock $ S.fromList (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
+        let noblock_ude = cuttingEdge graph_edges poe in
+        let g = createGraph graph_nodes noblock_ude in
+        let departEndPoint = EndPoint current_block_point in
+        case searchShortPath startPoint departEndPoint g of
+            Nothing -> []
+            Just (departRoot, departCost) ->
+                processReturnBlockTarget bp cl bc bcn g departRoot departCost current_block_point endPoint
             
 solveTarget :: BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
 solveTarget bp [] startPoint endPoint = maybeToList (gotoend bp startPoint endPoint)
@@ -187,19 +190,26 @@ isBlockConstraint :: [Int] -> Bool
 isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map M.! g /= Green) && (node_color_map M.! b /= Blue) && (node_color_map M.! y /= Yellow)
 isBlockConstraint xs = False
 
-getAnswerList :: StartPoint -> EndPoint -> BlockPosition -> BonusPoint -> Maybe (BonusPoint, Cost, Path, BlockPosition)
-getAnswerList sp ep bp n = maybe Nothing (\l -> let bplist = L.map snd l in f bplist n) (L.find (\xs -> fst (head xs) == n) answerList)
-    where
-        f :: [BlockPosition] -> BonusPoint -> Maybe (BonusPoint,Cost,Path,BlockPosition)
-        f xs n = maybe Nothing (\(a,b,c) -> Just (n,b,a,c)) (calcOptimizedRootTarget bp xs sp ep) 
+isTargetFigure :: BlockPosition -> Bool
+--isTargetFigure a = (isDepressionSquareBonus a) || (isSquareBonus a) || (isPentagonBonus a)
+isTargetFigure a = isPentagonBonus a
+
+targetList :: BlockPosition -> [BlockPosition]
+targetList bp = let l = L.filter isTargetFigure $ L.filter (not.isCenterBlockBonus) blockArrayRaw in
+    let replaceList = L.map (\n -> if not (isPentagonBonus n) then n // [(Black,bp A.! Black)] else n) l in
+    let blockPlaceFilterList = L.filter (\n -> let ns = A.elems n in S.size (S.fromList ns) == 5) replaceList in
+    S.toList $ S.fromList blockPlaceFilterList
 
 calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Cost,Path,BlockPosition)]
-calcTargetRoot sp ep bp = catMaybes [getAnswerList sp ep bp (BonusPoint 23)] -- getAnswerList sp ep bp 23, getAnswerList sp ep bp 21, getAnswerList sp ep bp 20 ]
+calcTargetRoot sp ep bp =
+    concatMap (\tlist -> let bplist = A.assocs tlist in L.map (\(a,b,c) -> (calcBonusPoint graph_nodes tlist,b,a,c)) (solveTarget bp bplist sp ep)) (targetList bp)
 
 createRootFromCode :: Node -> Cost -> InitCode -> [Word8]
 createRootFromCode gp cost code = 
     let bp = fromInitCode gp code in 
-    if isInitBlockPosition bp then g cost (calcTargetRoot (StartPoint 17) (EndPoint 18) bp) else []
+    if isInitBlockPosition bp 
+    then g cost (calcTargetRoot (StartPoint 10) (EndPoint 11) bp) 
+    else []
         where
             g :: Cost -> [(BonusPoint,Cost,Path,BlockPosition)] -> [Word8]
             g cost xs = 

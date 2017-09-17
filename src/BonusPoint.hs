@@ -1,4 +1,4 @@
-module BonusPoint (BonusPoint(..), calcBonusPoint) where
+module BonusPoint (BonusPoint(..), isCenterBlockBonus, isTriangleBonus, isDepressionSquareBonus, isSquareBonus, isPentagonBonus, calcBonusPoint) where
 
 import Data.List as L
 import Data.Array as A
@@ -20,7 +20,6 @@ instance Num BonusPoint where
     signum (BonusPoint a) = BonusPoint (signum a)
     fromInteger a = BonusPoint (fromInteger a)
 
-
 calcPolygonBlockBonus :: FloorNodes -> BlockPosition -> BonusPoint
 calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
         where
@@ -31,8 +30,11 @@ calcPolygonBlockBonus bn bp = L.foldl' checkColor 0 colorNodeList
             getNodeColor :: Node -> BlockColor
             getNodeColor n = (M.!) node_color_map n
 
+isCenterBlockBonus :: BlockPosition -> Bool
+isCenterBlockBonus bp = bp A.! Black == 16
+
 calcCenterBlockBonus :: BlockPosition -> BonusPoint
-calcCenterBlockBonus bp = if bp A.! Black == 16 then 5 else 0
+calcCenterBlockBonus bp = if isCenterBlockBonus bp then 5 else 0
 
 convertNodesToColorNode :: [[Node]] -> [Set (BlockColor, Node)]
 convertNodesToColorNode = L.map (S.fromList . (L.map (\n -> ((M.!) node_color_map n, n))))
@@ -41,11 +43,20 @@ calcFigureBonusImpl ::BonusPoint -> [Set (BlockColor,Node)] -> Set (BlockColor,N
 calcFigureBonusImpl bonus target bs =
     L.foldl' (\cur -> \elt -> if isSubsetOf elt bs then cur+bonus else cur) 0 target
 
+isFigureBonusPoint :: [Set (BlockColor,Node)] -> BlockPosition -> Bool
+isFigureBonusPoint target bp = let as = S.fromList (A.assocs bp) in any (\n -> isSubsetOf n as) target
+
+isTriangleBonus :: BlockPosition -> Bool
+isTriangleBonus = isFigureBonusPoint triangles
+
 triangles :: [Set (BlockColor,Node)]
 triangles = convertNodesToColorNode [[1,2,5],[1,5,10],[2,3,6],[3,4,7],[4,7,11],[8,12,13],[9,14,15]]
 
 calcTriangleBonus :: Set (BlockColor,Node) -> BonusPoint
 calcTriangleBonus = calcFigureBonusImpl 5 triangles
+
+isDepressionSquareBonus :: BlockPosition -> Bool
+isDepressionSquareBonus = isFigureBonusPoint depressionSquare 
 
 depressionSquare :: [Set (BlockColor,Node)]
 depressionSquare = convertNodesToColorNode [[1,2,5,10],[3,4,7,11]]
@@ -53,11 +64,17 @@ depressionSquare = convertNodesToColorNode [[1,2,5,10],[3,4,7,11]]
 calcDepressionSquareBonus :: Set (BlockColor,Node) -> BonusPoint
 calcDepressionSquareBonus = calcFigureBonusImpl 2 depressionSquare
 
+isSquareBonus :: BlockPosition -> Bool
+isSquareBonus = isFigureBonusPoint square
+
 square :: [Set (BlockColor,Node)]
 square = convertNodesToColorNode [[2,5,6,8],[3,6,7,9],[5,8,10,12],[7,9,11,15]]
 
 calcSquareBonus :: Set (BlockColor,Node) -> BonusPoint
 calcSquareBonus = calcFigureBonusImpl 8 square
+
+isPentagonBonus :: BlockPosition -> Bool
+isPentagonBonus = isFigureBonusPoint pentagon
 
 pentagon :: [Set (BlockColor,Node)]
 pentagon = [S.fromList [(Red,8),(Green,6),(Blue,9),(Yellow,13),(Black,14)], S.fromList [(Red,14),(Green,6),(Blue,9),(Yellow,13),(Black,8)]]
@@ -80,3 +97,4 @@ calcBonusPoint bn bp =
     let centerBlockBonus = calcCenterBlockBonus bp in
     let figureBonus = calcFigureBonus bp in
     polygonBlockBonus + centerBlockBonus + figureBonus
+

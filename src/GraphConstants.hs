@@ -4,6 +4,7 @@ import Data.List as L
 import Data.Map as M
 import Data.Set as S
 import Data.Graph.Inductive.Graph
+import Data.Vect.Float
 
 import BlockColor
 
@@ -13,7 +14,23 @@ floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]
 
 node_color_list :: [(Node, BlockColor)]
-node_color_list = [(1,Red),(2,Blue),(3,Yellow),(4,Blue),(5,Yellow),(6,Green),(7,Red),(8,Red),(9,Blue),(10,Green),(11,Green),(12,Blue),(13,Yellow),(14,Red),(15,Yellow), (16,None)]
+node_color_list = 
+    [(1,Red)
+    ,(2,Blue)
+    ,(3,Yellow)
+    ,(4,Blue)
+    ,(5,Yellow)
+    ,(6,Green)
+    ,(7,Red)
+    ,(8,Red)
+    ,(9,Blue)
+    ,(10,Green)
+    ,(11,Green)
+    ,(12,Blue)
+    ,(13,Yellow)
+    ,(14,Red)
+    ,(15,Yellow)
+    ,(16,None)]
 
 middle_node_list :: [(Node, BlockColor)]
 middle_node_list = L.map (\n -> (n,None)) [17..44]
@@ -22,13 +39,17 @@ node_color_map :: Map Node BlockColor
 node_color_map = M.fromList node_color_list
 
 graph_nodes :: FloorNodes
--- graph_nodes = FloorNodes node_color_list
-graph_nodes = FloorNodes $ node_color_list ++ middle_node_list
+graph_nodes = FloorNodes node_color_list
+--graph_nodes = FloorNodes $ node_color_list ++ middle_node_list
 
-l1 = 77.942
-l2 = 63.64
-l3 = 45.0
-l4 = 32.942
+-- l1 = 77.942
+-- l2 = 63.64
+-- l3 = 45.0
+-- l4 = 32.942
+l1 = 2.0 * 77.942 / 45.0
+l2 = 2.0 * 63.64 / 45.0
+l3 = 2.0 * 45.0 / 45.0
+l4 = 2.0 * 32.942 / 45.0
 
 graph_edge_list :: [LEdge Float]
 graph_edge_list = [(1,2,l1),(1,5,l3),(1,10,l2),(2,3,l1),(2,5,l3),(2,6,l3),(3,4,l1),(3,6,l3),(3,7,l3),(4,7,l3),(4,11,l2),(5,8,l3),(5,10,l3),(6,8,l3),(6,9,l3),(7,9,l3),(7,11,l3),(8,12,l3),(8,13,l3),(9,14,l3),(9,15,l3),(10,12,l3),(11,15,l3),(12,13,l3),(13,14,l4),(14,15,l3)]
@@ -89,11 +110,12 @@ graph_edge_with_center_list :: [LEdge Float]
 graph_edge_with_center_list = [(6,16,45),(8,16,45),(9,16,45),(13,16,45),(14,16,45)]
 
 graph_edges :: FloorUnDirectedEdges
--- graph_edges = FloorUnDirectedEdges graph_edge_list
-graph_edges = FloorUnDirectedEdges $ graph_middle_edge_list
+graph_edges = FloorUnDirectedEdges graph_edge_list
+-- graph_edges = FloorUnDirectedEdges $ graph_middle_edge_list
 
 graph_middle_edges :: FloorUnDirectedEdges
-graph_middle_edges = FloorUnDirectedEdges graph_middle_middle_edge_list
+graph_middle_edges = FloorUnDirectedEdges []
+-- graph_middle_edges = FloorUnDirectedEdges graph_middle_middle_edge_list
 
 graph_edges_with_center :: FloorUnDirectedEdges
 graph_edges_with_center = FloorUnDirectedEdges graph_edge_with_center_list
