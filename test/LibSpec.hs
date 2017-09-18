@@ -28,7 +28,7 @@ spec = do
 
         it "sample13" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            processBlockTarget bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` [([10,1,10,1,2,1,2,6,8,12,10,12,8,6,2,6,9,7,11],Cost 34.392265,array (Red,Black) [(Red,1),(Green,3),(Blue,2),(Yellow,4),(Black,5)])]
+            processBlockTarget bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` [([10,1,10,1,2,1,2,6,8,12,10,12,8,6,2,6,9,7,11],Cost 43.513245,array (Red,Black) [(Red,1),(Green,3),(Blue,2),(Yellow,4),(Black,5)])]
             
     describe "toInitCode" $ do
         it "sample01" $ do
