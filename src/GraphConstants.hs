@@ -1,5 +1,5 @@
-module GraphConstants (NodeInfo(..), Cost(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, graph_nodes, graph_edges_with_center, graph_edges, graph_middle_edges) where
-
+module GraphConstants (NodeInfo(..), Cost(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges) where
+ 
 import Data.List as L
 import Data.Map as M
 import Data.Set as S
@@ -8,7 +8,8 @@ import Linear
 
 import BlockColor
 
-newtype NodeInfo = NodeInfo (BlockColor, V2 Float)
+type Point = V2 Float
+newtype NodeInfo = NodeInfo (BlockColor, Point)
 newtype Cost = Cost Float deriving (Ord,Eq,Show)
 
 instance Num Cost where
@@ -59,6 +60,9 @@ middle_node_list = L.map (\n -> (n,None)) [17..44]
 node_color_map :: Map Node BlockColor
 node_color_map = M.fromList (L.map (\(n,NodeInfo(c,_)) -> (n,c)) node_list)   
 
+node_position_map :: Map Node Point
+node_position_map = M.fromList (L.map (\(n,NodeInfo(_,c)) -> (n,c)) node_list)   
+
 graph_nodes :: FloorNodes
 graph_nodes = node_list
 --graph_nodes = FloorNodes $ node_color_list ++ middle_node_list
@@ -73,7 +77,21 @@ l3 = Cost $ 2.0 * 45.0 / 45.0
 l4 = Cost $ 2.0 * 32.942 / 45.0
 
 graph_edge_list :: [LEdge Cost]
-graph_edge_list = [(1,2,l1),(1,5,l3),(1,10,l2),(2,3,l1),(2,5,l3),(2,6,l3),(3,4,l1),(3,6,l3),(3,7,l3),(4,7,l3),(4,11,l2),(5,8,l3),(5,10,l3),(6,8,l3),(6,9,l3),(7,9,l3),(7,11,l3),(8,12,l3),(8,13,l3),(9,14,l3),(9,15,l3),(10,12,l3),(11,15,l3),(12,13,l3),(13,14,l4),(14,15,l3)]
+graph_edge_list = 
+    [(1,2,l1),(1,5,l3),(1,10,l2)
+    ,(2,3,l1),(2,5,l3),(2,6,l3)
+    ,(3,4,l1),(3,6,l3),(3,7,l3)
+    ,(4,7,l3),(4,11,l2)
+    ,(5,8,l3),(5,10,l3)
+    ,(6,8,l3),(6,9,l3)
+    ,(7,9,l3),(7,11,l3)
+    ,(8,12,l3),(8,13,l3)
+    ,(9,14,l3),(9,15,l3)
+    ,(10,12,l3)
+    ,(11,15,l3)
+    ,(12,13,l3)
+    ,(13,14,l4)
+    ,(14,15,l3)]
 
 h1 = l1 / (Cost 2.0)
 h2 = l2 / (Cost 2.0)
@@ -129,6 +147,9 @@ graph_middle_middle_edge_list =
 
 graph_edge_with_center_list :: [LEdge Cost]
 graph_edge_with_center_list = [(6,16,l3),(8,16,l3),(9,16,l3),(13,16,l3),(14,16,l3)]
+
+edge_cost_map :: Map (Node,Node) Cost
+edge_cost_map = M.fromList $ concatMap (\(a,b,c) -> [((a,b),c),((b,a),c)]) graph_edge_list
 
 graph_edges :: FloorUnDirectedEdges
 graph_edges = graph_edge_list

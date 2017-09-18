@@ -27,6 +27,7 @@ library
                      , array
                      , fgl
                      , linear
+                     , multimap
   default-language:    Haskell2010
 
 executable BlockSort-exe
