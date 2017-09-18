@@ -1,4 +1,4 @@
-module GraphConstants (Vec,NodeInfo(..), Cost(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges, calcAngleCost) where
+module GraphConstants (Vec,NodeInfo(..), Cost(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges, calcDepartCostFromAngle, calcReturnCostFromAngle) where
  
 import Data.List as L
 import Data.Map as M
@@ -33,8 +33,11 @@ instance Fractional Cost where
 type FloorNodes = [LNode NodeInfo]
 type FloorUnDirectedEdges = [LEdge Cost]
 
-calcAngleCost :: Float -> Cost
-calcAngleCost angle = Cost $ 3.0 * angle / pi
+calcDepartCostFromAngle :: Float -> Cost
+calcDepartCostFromAngle angle = Cost $ 1.0 * angle / pi
+
+calcReturnCostFromAngle :: Float -> Cost
+calcReturnCostFromAngle angle = Cost $ 4.0 * angle * angle / (pi * pi)
 
 floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]

@@ -70,15 +70,15 @@ createRotateBaseEdges_ (fn,fde,toOuter,toInner,toParent,id) e@(n1,n2,c) =
 calcAngle :: Vec -> Vec -> Float
 calcAngle a b = let ret = acos (dot a b / ((norm a) * (norm b))) in if isNaN ret then 1.0 else ret
 
-addMiniEdges :: FloorDirectedEdges -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> FloorDirectedEdges
-addMiniEdges fde toOuter toInner = L.foldl' f fde graph_nodes
+addMiniEdges :: FloorDirectedEdges -> (Float -> Cost) -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> FloorDirectedEdges
+addMiniEdges fde costFunc toOuter toInner = L.foldl' f fde graph_nodes
     where
         f cur (n,info) = 
             let outer = toOuter A.! n in
             let inner = toInner A.! n in
             L.foldl' (g inner) cur outer
         g inner cur (on,NodeInfo(obc,ov)) =
-            L.foldl' (\cur_ -> \(inn,NodeInfo(ibc,iv)) -> let c = calcAngleCost (calcAngle iv ov) in (inn,on,c):cur_) cur inner
+            L.foldl' (\cur_ -> \(inn,NodeInfo(ibc,iv)) -> let c = costFunc (calcAngle iv ov) in (inn,on,c):cur_) cur inner
             
 addParentEdges :: FloorDirectedEdges -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> StartPoint -> EndPoint -> FloorDirectedEdges
 addParentEdges fde toOuter toInner (StartPoint s) (EndPoint e) =
@@ -106,11 +106,11 @@ searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
         (Just path, Just cost) -> Just (path, cost)
         (_, _) -> Nothing
 
-goto :: [Node] -> StartPoint -> EndPoint -> Maybe (Path,Cost)
-goto poe startPoint endPoint = 
+goto :: [Node] -> (Float -> Cost) -> StartPoint -> EndPoint -> Maybe (Path,Cost)
+goto poe costFunc startPoint endPoint = 
     let noblock_ude = cuttingEdge graph_edges (S.fromList poe) in
     let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = createRotateBaseEdges graph_nodes noblock_ude in
-    let edgesWithMiniEdges = addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode in
+    let edgesWithMiniEdges = addMiniEdges edgesHavingMiniNodes costFunc nodeToOuterMiniNode nodeToInnerMiniNode in
     let edgesWithParentEdges = addParentEdges edgesWithMiniEdges nodeToOuterMiniNode nodeToInnerMiniNode startPoint endPoint in
     let g = createGraph nodesWithMiniNodes edgesWithParentEdges in
     maybe Nothing (\(p,c) -> Just (refinePath miniNodeToParentNode p, c)) (searchShortPath startPoint endPoint g)
@@ -134,7 +134,7 @@ findEscapeNode bp cl bc s = let onboardnodes = A.elems bp in
     let targetnodes = L.map snd cl in
     let checknodes = onboardnodes ++ targetnodes in
     let nodes = L.filter (\n -> not (L.elem n checknodes)) [1..15] in
-    let ms = catMaybes $ L.map (\e -> goto poe (StartPoint s) (EndPoint e)) nodes in
+    let ms = catMaybes $ L.map (\e -> goto poe calcReturnCostFromAngle (StartPoint s) (EndPoint e)) nodes in
     if L.null ms then Nothing else Just (head $ L.sortBy (\(_,l) -> \(_,r) -> compare l r) ms)
 
 
@@ -144,7 +144,7 @@ searchNextTarget bp cl bc e backNode endPoint = solveTarget (bp // [(bc,e)]) cl 
 searchReturnRoot :: BlockPosition -> [(BlockColor, Node)] -> BlockColor -> Path -> Cost -> Node -> Node -> EndPoint -> [(Path,Cost,BlockPosition)]
 searchReturnRoot bp cl bc departRoot departCost s e endPoint = 
     let poe = (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
-    case goto poe (StartPoint s) (EndPoint e) of
+    case goto poe calcReturnCostFromAngle (StartPoint s) (EndPoint e) of
         Nothing -> []
         Just (returnRoot, returnCost) ->
             let moveRoot = departRoot ++ (tail returnRoot) in
@@ -182,13 +182,13 @@ processBlockTarget bp cl bc bcn startPoint endPoint =
     else
         let departEndPoint = EndPoint current_block_point in
         let poe = (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
-        case goto poe startPoint departEndPoint of
+        case goto poe calcDepartCostFromAngle startPoint departEndPoint of
             Nothing -> []
             Just (departRoot, departCost) ->
                 processReturnBlockTarget bp cl bc bcn departRoot departCost current_block_point endPoint
             
 solveTarget :: BlockPosition -> [(BlockColor, Node)] -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
-solveTarget bp [] startPoint endPoint = maybe [] (\(p,c) -> [(p,c,bp)]) (goto (A.elems bp) startPoint endPoint)
+solveTarget bp [] startPoint endPoint = maybe [] (\(p,c) -> [(p,c,bp)]) (goto (A.elems bp) calcDepartCostFromAngle startPoint endPoint)
 solveTarget bp unprocessBlocks startPoint endPoint = 
     concatMap (\p@(color,node) -> processBlockTarget bp (L.delete p unprocessBlocks) color node startPoint endPoint) unprocessBlocks
 
