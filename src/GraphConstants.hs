@@ -34,7 +34,7 @@ type FloorNodes = [LNode NodeInfo]
 type FloorUnDirectedEdges = [LEdge Cost]
 
 calcAngleCost :: Float -> Cost
-calcAngleCost angle = Cost $ if isNaN angle then 0.0 else 3.0 * angle / pi
+calcAngleCost angle = Cost $ 3.0 * angle / pi
 
 floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]

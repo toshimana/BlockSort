@@ -51,7 +51,7 @@ createRotateBaseEdges (fn,fde,toOuter,toInner,toParent,id) e@(n1,n2,c) =
         f func mm (k,a) = func k a mm
 
 calcAngle :: Vec -> Vec -> Float
-calcAngle a b = acos (dot a b / ((norm a) * (norm b)))
+calcAngle a b = let ret = acos (dot a b / ((norm a) * (norm b))) in if isNaN ret then 1.0 else ret
 
 addMiniEdges :: FloorDirectedEdges -> MultiMap Node (LNode NodeInfo) -> MultiMap Node (LNode NodeInfo) -> FloorDirectedEdges
 addMiniEdges fde toOuter toInner = L.foldl' f fde graph_nodes
