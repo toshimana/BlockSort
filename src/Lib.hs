@@ -1,4 +1,4 @@
-module Lib (StartPoint(..), EndPoint(..), Cost(..), processBlockTarget, solveTarget, calcOptimizedRootTarget, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode, targetList) where
+module Lib (StartPoint(..), EndPoint(..), processBlockTarget, solveTarget, calcOptimizedRootTarget, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode, targetList) where
 
 import Data.Array as A
 import Data.Map as M
@@ -19,34 +19,23 @@ import GraphConstants
 type BlockGraph = Gr NodeInfo Cost
 
 type PointsOfBlock = Set Node
-type FloorDirectedEdges = [LEdge Float]
+type FloorDirectedEdges = [LEdge Cost]
 
 newtype StartPoint = StartPoint Node
 newtype EndPoint = EndPoint Node
-
-newtype Cost = Cost Float deriving (Ord,Eq,Show)
-
-instance Num Cost where
-    (+) (Cost a) (Cost b) = Cost (a+b)
-    (-) (Cost a) (Cost b) = Cost (a-b)
-    (*) (Cost a) (Cost b) = Cost (a*b)
-    negate (Cost a) = Cost (negate a)
-    abs (Cost a) = Cost (abs a)
-    signum (Cost a) = Cost (signum a)
-    fromInteger a = Cost (fromInteger a)
-
-instance Real Cost where
-    toRational (Cost a) = toRational a
 
 convertDirectedEdges :: FloorUnDirectedEdges -> FloorDirectedEdges
 convertDirectedEdges edges =
     concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
 
+createRotateBaseEdges :: ([LEdge Cost],Node) -> LEdge Cost -> ([LEdge Cost],Node)
+createRotateBaseEdges (cur,id) e@(n1,n2,c) = undefined
+
 createGraph :: FloorNodes -> FloorUnDirectedEdges -> BlockGraph
 createGraph nodes unDirectedEdges =
-    let (edgesHavingMiniNodes,sizeOfNodes) = L.foldl' (\(es,newid) -> \(n1,n2,c) -> (es,newid)) ([],length nodes)  unDirectedEdges in
+    let (edgesHavingMiniNodes,sizeOfNodes) = L.foldl' createRotateBaseEdges ([],length nodes) unDirectedEdges in
     let directedEdges = convertDirectedEdges unDirectedEdges in
-    mkGraph nodes (L.map (\(a,b,c) -> (a,b,Cost c)) directedEdges)
+    mkGraph nodes directedEdges
 
 cuttingEdge :: FloorUnDirectedEdges -> PointsOfBlock -> FloorUnDirectedEdges
 cuttingEdge ude poe =
