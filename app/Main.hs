@@ -46,13 +46,13 @@ greenBlocks :: [Node]
 greenBlocks = L.filter (\n -> node_color_map M.! n /= Green) [1..15]
 
 
-writeAllbin id = let file = printf "root%02d.bin" id in encodeFile file $ createBinary id 4000
+writeAllbin id = let file = printf "root%02d.bin" id in encodeFile file $ createBinary id 100
 
 main :: IO ()
 main = do
 --    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot (StartPoint 10) (EndPoint 11)) blockArray
---    print $ createBinary 1 (Cost 80.0)
-    encodeFile "root.bin" $ createBinary 9 (Cost 1000.0)
+    print $ createBinary 9 (Cost 100.0)
+--    encodeFile "root.bin" $ createBinary 9 (Cost 100.0)
 --    mapM_ writeAllbin greenBlocks
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV

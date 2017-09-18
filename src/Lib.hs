@@ -80,7 +80,8 @@ createGraph nodes directedEdges =
 cuttingEdge :: FloorUnDirectedEdges -> PointsOfBlock -> FloorUnDirectedEdges
 cuttingEdge ude poe =
     let tEdges = L.filter (\(l,r,_) -> not((S.member l poe) || (S.member r poe))) ude in
-    let middle_edges = S.foldl' (\cur -> \p -> let s = L.foldl' (\c -> \(l,r,_) -> if l==p then S.insert r c else if r==p then S.insert l c else c) S.empty ude in S.union cur (S.fromList (L.filter (\(l,r,_) -> (S.member l s)&&(S.member r s)) graph_middle_edges))) S.empty poe in
+
+        let middle_edges = S.foldl' (\cur -> \p -> let s = L.foldl' (\c -> \(l,r,_) -> if l==p then S.insert r c else if r==p then S.insert l c else c) S.empty ude in S.union cur (S.fromList (L.filter (\(l,r,_) -> (S.member l s)&&(S.member r s)) graph_middle_edges))) S.empty poe in
     tEdges ++ (S.toList middle_edges)
 
 searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
@@ -153,7 +154,7 @@ processReturnBlockTarget bp cl bc bcn departRoot departCost current_block_point 
                     let escapeNode = last moveRoot in
                     let backNode = last (init moveRoot) in
                     let currentRoot = moveRoot ++ [backNode] in
-                    let currentCost = moveCost + (edge_cost_map M.! (e,backNode)) in
+                    let currentCost = moveCost + (edge_cost_map M.! (escapeNode,backNode)) in
                     let restSolve = solveTarget (bp // [(bc,escapeNode)]) ((bc,bcn):cl) (StartPoint backNode) endPoint in
                     B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
             else searchReturnRoot bp cl bc departRoot departCost s e endPoint
@@ -209,11 +210,11 @@ isBlockConstraint (r:g:b:y:_) = (node_color_map M.! r /= Red) && (node_color_map
 isBlockConstraint xs = False
 
 isTargetFigure :: BlockPosition -> Bool
---isTargetFigure a = (isDepressionSquareBonus a) || (isSquareBonus a) || (isPentagonBonus a)
-isTargetFigure a = isPentagonBonus a
+isTargetFigure a = (not (isCenterBlockBonus a)) && ((isDepressionSquareBonus a) || (isSquareBonus a) || (isPentagonBonus a))
+--isTargetFigure a = isPentagonBonus a
 
 targetList :: BlockPosition -> [BlockPosition]
-targetList bp = let l = L.filter isTargetFigure $ L.filter (not.isCenterBlockBonus) blockArrayRaw in
+targetList bp = let l = L.filter isTargetFigure blockArrayRaw in
     let replaceList = L.map (\n -> if not (isPentagonBonus n) then n // [(Black,bp A.! Black)] else n) l in
     let blockPlaceFilterList = L.filter (\n -> let ns = A.elems n in S.size (S.fromList ns) == 5) replaceList in
     S.toList $ S.fromList blockPlaceFilterList
