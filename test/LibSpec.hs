@@ -17,24 +17,23 @@ spec :: Spec
 spec = do
     describe "createRotateBaseEdges" $ do
         it "sample01" $ do
-            let init = (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes)
-            let (g,e,_,_,m,i) = L.foldl' createRotateBaseEdges init graph_edges
+            let (g,e,_,_,m,i) = createRotateBaseEdges graph_nodes graph_edges
             (g,e,m,i) `shouldBe` (graph_nodes,graph_edges,M.empty,length graph_nodes)
 
     describe "addMiniEdges" $ do
         it "sample01" $ do
-            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = L.foldl' createRotateBaseEdges (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes) graph_edges
+            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = createRotateBaseEdges graph_nodes graph_edges
             addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode `shouldBe` []
 
     describe "addParentEdges" $ do
         it "sample01" $ do
-            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = L.foldl' createRotateBaseEdges (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes) graph_edges
+            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = createRotateBaseEdges graph_nodes graph_edges
             let edgesWithMiniEdges = addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode
             addParentEdges edgesWithMiniEdges nodeToOuterMiniNode nodeToInnerMiniNode (StartPoint 10) (EndPoint 11) `shouldBe` []
     
     describe "refinePath" $ do
         it "sample01" $ do
-            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = L.foldl' createRotateBaseEdges (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes) graph_edges
+            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = createRotateBaseEdges graph_nodes graph_edges
             let edgesWithMiniEdges = addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode
             let edgesWithParentEdges = addParentEdges edgesWithMiniEdges nodeToOuterMiniNode nodeToInnerMiniNode (StartPoint 10) (EndPoint 11)
             let g = createGraph nodesWithMiniNodes edgesWithParentEdges
