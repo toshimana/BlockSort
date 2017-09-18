@@ -1,4 +1,4 @@
-module Lib (StartPoint(..), EndPoint(..), processBlockTarget, solveTarget, calcOptimizedRootTarget, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode, targetList) where
+module Lib (StartPoint(..), EndPoint(..), processBlockTarget, createRotateBaseEdges, addMiniEdges, addParentEdges, goto, createGraph, searchShortPath, solveTarget, calcOptimizedRootTarget, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode, targetList) where
 
 import Data.Array as A
 import Data.Map as M
@@ -6,6 +6,7 @@ import Data.MultiMap as MM
 import Data.Set as S
 import Data.List as L
 import Data.Maybe as B
+import Linear.Metric
 import Data.Word
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Graph
@@ -29,7 +30,7 @@ convertDirectedEdges :: FloorUnDirectedEdges -> FloorDirectedEdges
 convertDirectedEdges edges =
     concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
 
-createRotateBaseEdges :: (FloorNodes,FloorDirectedEdges,MultiMap Node Node,MultiMap Node Node,Map Node Node,Node) -> LEdge Cost -> (FloorNodes,FloorDirectedEdges,MultiMap Node Node,MultiMap Node Node,Map Node Node,Node)
+createRotateBaseEdges :: (FloorNodes,FloorDirectedEdges,MultiMap Node (LNode NodeInfo),MultiMap Node (LNode NodeInfo),Map Node Node,Node) -> LEdge Cost -> (FloorNodes,FloorDirectedEdges,MultiMap Node (LNode NodeInfo),MultiMap Node (LNode NodeInfo),Map Node Node,Node)
 createRotateBaseEdges (fn,fde,toOuter,toInner,toParent,id) e@(n1,n2,c) = 
     let nc1 = node_color_map M.! n1 in
     let nc2 = node_color_map M.! n2 in
@@ -45,20 +46,35 @@ createRotateBaseEdges (fn,fde,toOuter,toInner,toParent,id) e@(n1,n2,c) =
     let mn2 = (id2,NodeInfo(nc1,e2)) in
     let mn3 = (id3,NodeInfo(nc2,e2)) in
     let mn4 = (id4,NodeInfo(nc2,e1)) in
-    (mn1:mn2:mn3:mn4:fn,(id1,id4,c):(id3,id2,c):fde,toOuter,toInner,toParent,id+4)
+    (mn1:mn2:mn3:mn4:fn,(id1,id4,c):(id3,id2,c):fde,L.foldl' (f MM.insert) toOuter [(n1,mn1),(n2,mn3)],L.foldl' (f MM.insert) toInner [(n1,mn2),(n2,mn4)],L.foldl' (f M.insert) toParent [(id1,n1),(id2,n1),(id3,n2),(id4,n2)],id+4)
+    where 
+        f func mm (k,a) = func k a mm
 
-addMiniEdges :: FloorDirectedEdges -> MultiMap Node Node -> MultiMap Node Node -> FloorDirectedEdges
-addMiniEdges = undefined
+calcAngle :: Vec -> Vec -> Float
+calcAngle a b = acos (dot a b / ((norm a) * (norm b)))
 
-addParentEdge :: FloorDirectedEdges -> MultiMap Node Node -> MultiMap Node Node -> StartPoint -> EndPoint -> FloorDirectedEdges
-addParentEdge = undefined
+addMiniEdges :: FloorDirectedEdges -> MultiMap Node (LNode NodeInfo) -> MultiMap Node (LNode NodeInfo) -> FloorDirectedEdges
+addMiniEdges fde toOuter toInner = L.foldl' f fde graph_nodes
+    where
+        f cur (n,info) = 
+            let outer = MM.lookup n toOuter in
+            let inner = MM.lookup n toInner in
+            L.foldl' (g inner) cur outer
+        g inner cur (on,NodeInfo(obc,ov)) =
+            L.foldl' (\cur_ -> \(inn,NodeInfo(ibc,iv)) -> let c = calcAngleCost (calcAngle iv ov) in (inn,on,c):cur_) cur inner
+            
+addParentEdges :: FloorDirectedEdges -> MultiMap Node (LNode NodeInfo) -> MultiMap Node (LNode NodeInfo) -> StartPoint -> EndPoint -> FloorDirectedEdges
+addParentEdges fde toOuter toInner (StartPoint s) (EndPoint e) =
+    let outer = MM.lookup s toOuter in
+    let inner = MM.lookup e toInner in
+    L.foldl' (\cur -> \(inn,_) -> (inn,e,Cost 0.0):cur) (L.foldl' (\cur -> \(on,_) -> (s,on,Cost 0.0):cur) fde outer) inner
 
-refinePath :: Node -> Node
-refinePath = undefined
+refinePath :: Map Node Node -> Path -> Path
+refinePath toParentNode p = L.map head $ group $ L.map (\n -> fromMaybe n (M.lookup n toParentNode)) p
 
-createGraph :: FloorNodes -> FloorUnDirectedEdges -> BlockGraph
-createGraph nodes unDirectedEdges =
-    let directedEdges = convertDirectedEdges unDirectedEdges in
+createGraph :: FloorNodes -> FloorDirectedEdges -> BlockGraph
+createGraph nodes directedEdges =
+--    let directedEdges = convertDirectedEdges unDirectedEdges in
     mkGraph nodes directedEdges
 
 cuttingEdge :: FloorUnDirectedEdges -> PointsOfBlock -> FloorUnDirectedEdges
@@ -78,9 +94,9 @@ goto poe startPoint endPoint =
     let noblock_ude = cuttingEdge graph_edges (S.fromList poe) in
     let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = L.foldl' createRotateBaseEdges (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes) noblock_ude in
     let edgesWithMiniEdges = addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode in
-    let edgesWithParentEdges = addParentEdge edgesWithMiniEdges nodeToOuterMiniNode nodeToInnerMiniNode startPoint endPoint in
+    let edgesWithParentEdges = addParentEdges edgesWithMiniEdges nodeToOuterMiniNode nodeToInnerMiniNode startPoint endPoint in
     let g = createGraph nodesWithMiniNodes edgesWithParentEdges in
-    maybe Nothing (\(p,c) -> Just (L.map refinePath p, c)) (searchShortPath startPoint endPoint g)
+    maybe Nothing (\(p,c) -> Just (refinePath miniNodeToParentNode p, c)) (searchShortPath startPoint endPoint g)
 
 getColorNode :: FloorNodes -> BlockColor -> Path
 getColorNode fn Black = L.map (\(e,_) -> e) fn

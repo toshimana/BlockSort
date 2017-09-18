@@ -1,4 +1,4 @@
-module GraphConstants (NodeInfo(..), Cost(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges) where
+module GraphConstants (Vec,NodeInfo(..), Cost(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges, calcAngleCost) where
  
 import Data.List as L
 import Data.Map as M
@@ -9,7 +9,8 @@ import Linear
 import BlockColor
 
 type Point = V2 Float
-newtype NodeInfo = NodeInfo (BlockColor, Point)
+type Vec = V2 Float
+newtype NodeInfo = NodeInfo (BlockColor, Point) deriving (Eq,Show)
 newtype Cost = Cost Float deriving (Ord,Eq,Show)
 
 instance Num Cost where
@@ -31,6 +32,9 @@ instance Fractional Cost where
 
 type FloorNodes = [LNode NodeInfo]
 type FloorUnDirectedEdges = [LEdge Cost]
+
+calcAngleCost :: Float -> Cost
+calcAngleCost angle = Cost $ if isNaN angle then 0.0 else 3.0 * angle / pi
 
 floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]

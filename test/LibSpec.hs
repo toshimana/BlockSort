@@ -2,7 +2,9 @@ module LibSpec (spec) where
 
 import Test.Hspec
 import Data.Array
-import Data.List
+import Data.List as L
+import Data.Map as M
+import Data.MultiMap as MM
 import Data.Maybe
 
 import Lib
@@ -13,6 +15,36 @@ import BonusPoint
 
 spec :: Spec
 spec = do
+    describe "createRotateBaseEdges" $ do
+        it "sample01" $ do
+            let init = (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes)
+            let (g,e,_,_,m,i) = L.foldl' createRotateBaseEdges init graph_edges
+            (g,e,m,i) `shouldBe` (graph_nodes,graph_edges,M.empty,length graph_nodes)
+
+    describe "addMiniEdges" $ do
+        it "sample01" $ do
+            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = L.foldl' createRotateBaseEdges (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes) graph_edges
+            addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode `shouldBe` []
+
+    describe "addParentEdges" $ do
+        it "sample01" $ do
+            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = L.foldl' createRotateBaseEdges (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes) graph_edges
+            let edgesWithMiniEdges = addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode
+            addParentEdges edgesWithMiniEdges nodeToOuterMiniNode nodeToInnerMiniNode (StartPoint 10) (EndPoint 11) `shouldBe` []
+    
+    describe "refinePath" $ do
+        it "sample01" $ do
+            let (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,sizeOfNodes) = L.foldl' createRotateBaseEdges (graph_nodes,[],MM.empty,MM.empty,M.empty,length graph_nodes) graph_edges
+            let edgesWithMiniEdges = addMiniEdges edgesHavingMiniNodes nodeToOuterMiniNode nodeToInnerMiniNode
+            let edgesWithParentEdges = addParentEdges edgesWithMiniEdges nodeToOuterMiniNode nodeToInnerMiniNode (StartPoint 10) (EndPoint 11)
+            let g = createGraph nodesWithMiniNodes edgesWithParentEdges
+            searchShortPath (StartPoint 10) (EndPoint 11) g `shouldBe` Nothing
+            
+
+    describe "goto" $ do
+        it "sample01" $ do
+            goto [] (StartPoint 10) (EndPoint 11) `shouldBe` Nothing
+
     describe "solve" $ do
         it "sample09" $ do
             let bns = array (Red,Black) [(Red,2),(Green,1),(Blue,3),(Yellow,4),(Black,10)]
@@ -29,7 +61,7 @@ spec = do
         it "sample13" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
             processBlockTarget bns [(Red,1)] Blue 2 (StartPoint 10) (EndPoint 11) `shouldBe` [([10,1,10,1,2,1,2,6,8,12,10,12,8,6,2,6,9,7,11],Cost 43.513245,array (Red,Black) [(Red,1),(Green,3),(Blue,2),(Yellow,4),(Black,5)])]
-            
+
     describe "toInitCode" $ do
         it "sample01" $ do
             toInitCode (array (Red,Black) [(Red,15),(Blue,14),(Yellow,12),(Black,13)])`shouldBe` InitCode ((13-1)*11*11*11+(11-1)*11*11+(10-1)*11+(10-1))
