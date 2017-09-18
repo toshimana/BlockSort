@@ -59,7 +59,9 @@ node_list =
     ,(13,NodeInfo(Yellow,V2 (sqrt 3.0 * 2.0 + 1.0) (sqrt 3.0 + 2.0)))
     ,(14,NodeInfo(Red,V2 (sqrt 3.0 * 4.0 - 1.0) (sqrt 3.0 + 2.0)))
     ,(15,NodeInfo(Yellow,V2 (sqrt 3.0 * 4.0 + 1.0) (sqrt 3.0 + 2.0)))
-    ,(16,NodeInfo(None,V2 0.0 0.0))]
+    ,(16,NodeInfo(None,V2 0.0 0.0))
+    ,(17,NodeInfo(None,V2 (sqrt 3.0 - 1.5) ((sqrt 3.0) / 2.0 + 1.0)))
+    ,(18,NodeInfo(None,V2 (sqrt 3.0 * 5.0 + 2.0) (sqrt 3.0 + 1.0)))]
 
 middle_node_list :: [(Node, BlockColor)]
 middle_node_list = L.map (\n -> (n,None)) [17..44]
@@ -98,7 +100,10 @@ graph_edge_list =
     ,(11,15,l3)
     ,(12,13,l3)
     ,(13,14,l4)
-    ,(14,15,l3)]
+    ,(14,15,l3)
+    ,(10,17,0.0)
+    ,(11,18,0.0)
+    ]
 
 h1 = l1 / (Cost 2.0)
 h2 = l2 / (Cost 2.0)
