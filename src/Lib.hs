@@ -119,15 +119,6 @@ findEscapeNode bp cl tlist bc departRoot departCost s e endPoint =
                     B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentCost + cost, newbp)) restSolve
             else []
             
---    let onboardnodes = A.elems bp in 
---    let poe = (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
---    let targetnodes = L.map snd cl in
---    let checknodes = onboardnodes ++ targetnodes in
---    let nodes = L.filter (\n -> not (L.elem n checknodes)) [1..15] in
---    let ms = catMaybes $ L.map (\e -> goto poe calcReturnCostFromAngle (StartPoint s) (EndPoint e)) nodes in
---    if L.null ms then Nothing else Just (head $ L.sortBy (\(_,l) -> \(_,r) -> compare l r) ms)
-
-
 searchNextTarget :: BlockPosition -> [BlockColor] -> [BlockPosition] -> BlockColor -> Node -> Node -> EndPoint -> [(Path,Cost,BlockPosition)]
 searchNextTarget bp cl tlist bc e backNode endPoint = solveTarget (bp // [(bc,e)]) cl tlist (StartPoint backNode) endPoint
 
@@ -155,17 +146,6 @@ processReturnBlockTarget bp cl tlist bc bcn departRoot departCost current_block_
             if isMovableDestination bp e
             then searchReturnRoot bp cl tlist bc departRoot departCost s e endPoint
             else findEscapeNode bp cl tlist bc departRoot departCost s e endPoint
---                Nothing -> []
---                Just (returnRoot, returnCost) ->
---                    let moveRoot = departRoot ++ (tail returnRoot) in
---                    let moveCost = departCost + returnCost in
---                    let escapeNode = last moveRoot in
---                    let currentRoot = init moveRoot in
---                    let backNode = last currentRoot in
---                    let turnNode = innerToOuter M.! backNode in
---                    let currentCost = moveCost + (calcDepartCostFromAngle pi) in
---                    let restSolve = solveTarget (bp // [(bc,escapeNode)]) (bc:cl) tlist (StartPoint turnNode) endPoint in
---                    B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
 
 processBlockTarget :: BlockPosition -> [BlockColor] -> [BlockPosition] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
 processBlockTarget bp cl tlist bc bcn startPoint endPoint = 
@@ -183,7 +163,12 @@ processBlockTarget bp cl tlist bc bcn startPoint endPoint =
 solveTarget :: BlockPosition -> [BlockColor] -> [BlockPosition] -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
 solveTarget bp [] tlist startPoint endPoint = maybe [] (\(p,c) -> [(p,c,bp)]) (goto (A.elems bp) calcDepartCostFromAngle startPoint endPoint)
 solveTarget bp unprocessBlocks tlist startPoint endPoint = 
-    concatMap (\p@color -> processBlockTarget bp (L.delete p unprocessBlocks) tlist color 0 startPoint endPoint) unprocessBlocks
+    concatMap f unprocessBlocks
+    where
+        f color = 
+            let nodes = S.toList $ S.fromList $ L.map (\t -> t A.! color) tlist in
+            let restColors = L.delete color unprocessBlocks in
+            concatMap (\n -> let newtlist = L.filter (\t -> (t A.! color) == n) tlist in processBlockTarget bp restColors newtlist color n startPoint endPoint) nodes
 
 calcOptimizedRootTarget :: BlockPosition -> [BlockPosition] -> StartPoint -> EndPoint -> Maybe (Path,Cost,BlockPosition)
 calcOptimizedRootTarget bp tblist startPoint endPoint = 
