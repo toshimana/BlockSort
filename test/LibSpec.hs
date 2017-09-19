@@ -58,15 +58,18 @@ spec = do
 
         it "sample13" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            processBlockTarget bns [(Red,1)] Blue 2 (StartPoint 17) (EndPoint 18) `shouldBe` [([17,125,124,29,28,27,30,28,19,22,21,20,19,22,39,42,71,74,87,90,105,104,103,106,89,88,73,72,41,40,39,42,75,78,99,102,109,108,127,130,18],Cost 64.91813,array (Red,Black) [(Red,1),(Green,3),(Blue,2),(Yellow,4),(Black,5)])]
+            let t = [array (Red,Black) [(Red,1),(Green,3),(Blue,2),(Yellow,4),(Black,5)]] :: [BlockPosition]
+            processBlockTarget bns [Red] t Blue 2 (StartPoint 17) (EndPoint 18) `shouldBe` [([17,125,124,29,28,27,30,28,19,22,21,20,19,22,39,42,71,74,87,90,105,104,103,106,89,88,73,72,41,40,39,42,75,78,99,102,109,108,127,130,18],Cost 64.91813,array (Red,Black) [(Red,1),(Green,3),(Blue,2),(Yellow,4),(Black,5)])]
 
         it "sample14" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            processBlockTarget bns [] Black 7 (StartPoint 17) (EndPoint 18) `shouldBe` [([17,125,124,69,68,63,66,73,72,75,78,81,80,79,82,99,102,109,108,127,130,18],Cost 21.166666,array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,7)])]
+            let t = [array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,7)]] :: [BlockPosition]
+            processBlockTarget bns [] t Black 7 (StartPoint 17) (EndPoint 18) `shouldBe` [([17,125,124,69,68,63,66,73,72,75,78,81,80,79,82,99,102,109,108,127,130,18],Cost 21.166666,array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,7)])]
 
         it "sample15" $ do
             let bns = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]
-            solveTarget bns [] (StartPoint 17) (EndPoint 18) `shouldBe` [([17,125,124,103,106,111,114,115,118,119,122,109,108,127,130,18],Cost 10.130755,array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)])]
+            let t = [array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)]] :: [BlockPosition]
+            solveTarget bns [] t (StartPoint 17) (EndPoint 18) `shouldBe` [([17,125,124,103,106,111,114,115,118,119,122,109,108,127,130,18],Cost 10.130755,array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,4),(Black,5)])]
 
     describe "toInitCode" $ do
         it "sample01" $ do
@@ -87,8 +90,8 @@ spec = do
     describe "isDeadLock" $ do
         it "sample01" $ do
             let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
-            isDeadLock [] [(Blue,2),(Red,1)] arr 2 `shouldBe` True
+            isDeadLock [] [Blue,Red] arr 2 `shouldBe` True
 
         it "sample02" $ do
             let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
-            isDeadLock [2] [(Blue,2),(Red,1)] arr 1 `shouldBe` True            
+            isDeadLock [2] [Blue,Red] arr 1 `shouldBe` True            
