@@ -60,9 +60,11 @@ cuttingEdge de poe = S.foldl' f de poe
     where
         f :: FloorDirectedEdges -> Node -> FloorDirectedEdges
         f cur n = 
-            let outer = L.map fst $ nodeToOuterMiniNode A.! n in
-            let inner = L.map fst $ nodeToInnerMiniNode A.! n in
-            L.filter (\(s,e,_) -> not ((L.elem s inner)&&(L.elem e outer))) cur
+            if inRange (1,15) n then
+                let outer = S.fromList $ L.map fst $ nodeToOuterMiniNode A.! n in
+                let inner = S.fromList $ L.map fst $ nodeToInnerMiniNode A.! n in
+                L.filter (\(s,e,_) -> not ((S.member s inner)&&(S.member e outer))) cur
+            else cur
     
 searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
