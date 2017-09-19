@@ -1,8 +1,11 @@
-module GraphConstants (Vec,NodeInfo(..), Cost(..), FloorNodes(..), FloorUnDirectedEdges(..), floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges, calcDepartCostFromAngle, calcReturnCostFromAngle) where
+module GraphConstants (Vec,NodeInfo(..), Cost(..), FloorNodes, FloorUnDirectedEdges, FloorDirectedEdges, floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges, calcDepartCostFromAngle, calcReturnCostFromAngle, createRotateBaseEdges, nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode, innerToOuter) where
  
+import Data.Array as A
 import Data.List as L
 import Data.Map as M
 import Data.Set as S
+import Control.Monad.ST
+import Data.Array.ST
 import Data.Graph.Inductive.Graph
 import Linear
 
@@ -32,6 +35,7 @@ instance Fractional Cost where
 
 type FloorNodes = [LNode NodeInfo]
 type FloorUnDirectedEdges = [LEdge Cost]
+type FloorDirectedEdges = [LEdge Cost]
 
 calcDepartCostFromAngle :: Float -> Cost
 calcDepartCostFromAngle angle = Cost $ 1.0 * angle / pi
@@ -173,4 +177,41 @@ graph_middle_edges = []
 
 graph_edges_with_center :: FloorUnDirectedEdges
 graph_edges_with_center = graph_edge_with_center_list
-        
+
+createMapArray :: Node -> [(Node,LNode NodeInfo)] -> Array Node [LNode NodeInfo]
+createMapArray id list = runSTArray $ do
+    arr <- newArray (1,id) []
+    f arr list
+    where
+        f :: STArray s Node [LNode NodeInfo] -> [(Node,LNode NodeInfo)] -> ST s (STArray s Node [LNode NodeInfo])
+        f ar [] = return ar
+        f ar ((n,ni):xs) = do
+            l <- readArray ar n
+            writeArray ar n (ni:l)
+            f ar xs
+
+createRotateBaseEdges :: FloorNodes -> FloorUnDirectedEdges -> (FloorNodes,FloorDirectedEdges,Array Node [LNode NodeInfo], Array Node [LNode NodeInfo],Map Node Node,Map Node Node,Node)
+createRotateBaseEdges nodes ude = 
+    let (fn,fde,toOuterList,toInnerList,toParentList,innerToOuter,id) = L.foldl' createRotateBaseEdges_ (nodes,[],[],[],[],[],length nodes) ude in
+    (fn,fde,createMapArray id toOuterList,createMapArray id toInnerList, M.fromList toParentList, M.fromList innerToOuter, id)
+
+createRotateBaseEdges_ :: (FloorNodes,FloorDirectedEdges,[(Node,LNode NodeInfo)],[(Node,LNode NodeInfo)],[(Node,Node)],[(Node,Node)],Node) -> LEdge Cost -> (FloorNodes,FloorDirectedEdges,[(Node,LNode NodeInfo)],[(Node,LNode NodeInfo)],[(Node,Node)],[(Node,Node)],Node)
+createRotateBaseEdges_ (fn,fde,toOuter,toInner,toParent,innerToOuter,id) e@(n1,n2,c) = 
+    let nc1 = node_color_map M.! n1 in
+    let nc2 = node_color_map M.! n2 in
+    let p1 = node_position_map M.! n1 in
+    let p2 = node_position_map M.! n2 in
+    let e1 = p2 - p1 in
+    let e2 = p1 - p2 in
+    let id1 = id+1 in
+    let id2 = id+2 in
+    let id3 = id+3 in
+    let id4 = id+4 in
+    let mn1 = (id1,NodeInfo(nc1,e1)) in
+    let mn2 = (id2,NodeInfo(nc1,e2)) in
+    let mn3 = (id3,NodeInfo(nc2,e2)) in
+    let mn4 = (id4,NodeInfo(nc2,e1)) in
+    (mn1:mn2:mn3:mn4:fn,(id1,id4,c):(id3,id2,c):fde,(n1,mn1):(n2,mn3):toOuter,(n1,mn2):(n2,mn4):toInner,(id1,n1):(id2,n1):(id3,n2):(id4,n2):toParent,(id4,id3):(id2,id1):innerToOuter,id+4)
+
+(nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,innerToOuter, sizeOfNodes) = createRotateBaseEdges graph_nodes graph_edges
+    
