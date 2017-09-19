@@ -94,17 +94,29 @@ isDeadLock checked bp cl e =
         f target = let next = L.find (\(c,n) -> fst target == c) cl in
             maybe False (\(_,n) -> isDeadLock (e:checked) bp cl n) next
 
-findEscapeNode :: BlockPosition -> [BlockColor] -> [BlockPosition] -> BlockColor -> Node -> [(Path,Cost,BlockPosition)]
-findEscapeNode bp cl tlist bc e =
+findEscapeNode :: BlockPosition -> [BlockColor] -> [BlockPosition] -> BlockColor -> Path -> Cost -> Node -> Node -> EndPoint -> [(Path,Cost,BlockPosition)]
+findEscapeNode bp cl tlist bc departRoot departCost s e endPoint =
     concatMap f tlist
     where
         f :: BlockPosition -> [(Path,Cost,BlockPosition)]
-        f target = 
-            let unproceddBlocks = L.map (\c -> (c,target A.! c)) cl in
+        f target =
+            let unproceddBlocks = L.map (\c -> (c,target A.! c)) (bc:cl) in
             if isDeadLock [] bp unproceddBlocks e then
                 let targetNodes = A.elems target in
                 let nodes = L.filter (\n -> not (L.elem n targetNodes)) [1..15] in
-                undefined
+                let poe = L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp)) in
+                let ms = catMaybes $ L.map (\t -> goto poe calcReturnCostFromAngle (StartPoint s) (EndPoint t)) nodes in
+                if L.null ms then [] 
+                else let (returnRoot, returnCost) = head $ L.sortBy (\(_,l) -> \(_,r) -> compare l r) ms in
+                    let moveRoot = departRoot ++ (tail returnRoot) in
+                    let moveCost = departCost + returnCost in
+                    let escapeNode = last moveRoot in
+                    let currentRoot = init moveRoot in
+                    let backNode = last currentRoot in
+                    let turnNode = innerToOuter M.! backNode in
+                    let currentCost = moveCost + (calcDepartCostFromAngle pi) in
+                    let restSolve = solveTarget (bp // [(bc,escapeNode)]) (bc:cl) [target] (StartPoint turnNode) endPoint in
+                    B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentCost + cost, newbp)) restSolve
             else []
             
 --    let onboardnodes = A.elems bp in 
@@ -142,7 +154,7 @@ processReturnBlockTarget bp cl tlist bc bcn departRoot departCost current_block_
         searchRoundRoot departRoot departCost s e = let currentCl = bc:cl in
             if isMovableDestination bp e
             then searchReturnRoot bp cl tlist bc departRoot departCost s e endPoint
-            else findEscapeNode bp cl tlist bc e
+            else findEscapeNode bp cl tlist bc departRoot departCost s e endPoint
 --                Nothing -> []
 --                Just (returnRoot, returnCost) ->
 --                    let moveRoot = departRoot ++ (tail returnRoot) in
