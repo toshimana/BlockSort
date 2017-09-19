@@ -83,17 +83,30 @@ getColorNode fn Black = L.map (\(e,_) -> e) fn
 getColorNode fn color = 
     L.foldl' (\cur -> \(e,NodeInfo (c,_)) -> if c == color then e:cur else cur) [] fn
 
-isDeadLock :: Path -> [BlockColor] -> BlockPosition -> Node -> Bool
-isDeadLock checked cl bp e = undefined
---    if L.elem e checked then True
---    else let nodes = L.filter (\n -> snd n == e) (A.assocs bp) in 
---        if L.null nodes then False
---        else let target = head nodes in
---            let next = L.find (\(c,n) -> fst target == c) cl in
---            maybe False (\(_,n) -> isDeadLock (e:checked) cl bp n) next
+isMovableDestination :: BlockPosition -> Node -> Bool
+isMovableDestination bp e = not (L.elem e (A.elems bp))
 
-findEscapeNode :: BlockPosition -> [BlockColor] -> BlockColor -> Node -> Maybe (Path, Cost)
-findEscapeNode bp cl bc s = undefined
+isDeadLock :: [Node] -> BlockPosition -> [(BlockColor,Node)] -> Node -> Bool
+isDeadLock checked bp cl e = 
+    if L.elem e checked then True
+    else maybe False f (L.find (\n -> snd n == e) (A.assocs bp)) 
+    where
+        f target = let next = L.find (\(c,n) -> fst target == c) cl in
+            maybe False (\(_,n) -> isDeadLock (e:checked) bp cl n) next
+
+findEscapeNode :: BlockPosition -> [BlockColor] -> [BlockPosition] -> BlockColor -> Node -> [(Path,Cost,BlockPosition)]
+findEscapeNode bp cl tlist bc e =
+    concatMap f tlist
+    where
+        f :: BlockPosition -> [(Path,Cost,BlockPosition)]
+        f target = 
+            let unproceddBlocks = L.map (\c -> (c,target A.! c)) cl in
+            if isDeadLock [] bp unproceddBlocks e then
+                let targetNodes = A.elems target in
+                let nodes = L.filter (\n -> not (L.elem n targetNodes)) [1..15] in
+                undefined
+            else []
+            
 --    let onboardnodes = A.elems bp in 
 --    let poe = (L.map snd (L.filter (\(c,_) -> c /= bc) (A.assocs bp))) in
 --    let targetnodes = L.map snd cl in
@@ -127,20 +140,20 @@ processReturnBlockTarget bp cl tlist bc bcn departRoot departCost current_block_
     where
         searchRoundRoot :: Path -> Cost -> Node -> Node -> [(Path,Cost,BlockPosition)]
         searchRoundRoot departRoot departCost s e = let currentCl = bc:cl in
-            if isDeadLock [] currentCl bp e
-            then case findEscapeNode bp currentCl bc s of
-                Nothing -> []
-                Just (returnRoot, returnCost) ->
-                    let moveRoot = departRoot ++ (tail returnRoot) in
-                    let moveCost = departCost + returnCost in
-                    let escapeNode = last moveRoot in
-                    let currentRoot = init moveRoot in
-                    let backNode = last currentRoot in
-                    let turnNode = innerToOuter M.! backNode in
-                    let currentCost = moveCost + (calcDepartCostFromAngle pi) in
-                    let restSolve = solveTarget (bp // [(bc,escapeNode)]) (bc:cl) tlist (StartPoint turnNode) endPoint in
-                    B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
-            else searchReturnRoot bp cl tlist bc departRoot departCost s e endPoint
+            if isMovableDestination bp e
+            then searchReturnRoot bp cl tlist bc departRoot departCost s e endPoint
+            else findEscapeNode bp cl tlist bc e
+--                Nothing -> []
+--                Just (returnRoot, returnCost) ->
+--                    let moveRoot = departRoot ++ (tail returnRoot) in
+--                    let moveCost = departCost + returnCost in
+--                    let escapeNode = last moveRoot in
+--                    let currentRoot = init moveRoot in
+--                    let backNode = last currentRoot in
+--                    let turnNode = innerToOuter M.! backNode in
+--                    let currentCost = moveCost + (calcDepartCostFromAngle pi) in
+--                    let restSolve = solveTarget (bp // [(bc,escapeNode)]) (bc:cl) tlist (StartPoint turnNode) endPoint in
+--                    B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ (tail path), currentCost + cost, newbp)) restSolve
 
 processBlockTarget :: BlockPosition -> [BlockColor] -> [BlockPosition] -> BlockColor -> Node -> StartPoint -> EndPoint -> [(Path,Cost,BlockPosition)]
 processBlockTarget bp cl tlist bc bcn startPoint endPoint = 

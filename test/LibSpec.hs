@@ -90,8 +90,8 @@ spec = do
     describe "isDeadLock" $ do
         it "sample01" $ do
             let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
-            isDeadLock [] [Blue,Red] arr 2 `shouldBe` True
+            isDeadLock [] arr [(Blue,2),(Red,1)] 2 `shouldBe` True
 
         it "sample02" $ do
             let arr = array (Red,Black) [(Red,2),(Green,3),(Blue,1),(Yellow,5),(Black,4)]
-            isDeadLock [2] [Blue,Red] arr 1 `shouldBe` True            
+            isDeadLock [2] arr [(Blue,2),(Red,1)] 1 `shouldBe` True            
