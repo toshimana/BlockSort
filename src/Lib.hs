@@ -31,10 +31,10 @@ convertDirectedEdges edges =
 calcAngle :: Vec -> Vec -> Float
 calcAngle a b = let ret = acos (dot a b / ((norm a) * (norm b))) in if isNaN ret then 1.0 else ret
 
-addMiniEdges :: (Float -> Cost) -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> FloorDirectedEdges
-addMiniEdges costFunc toOuter toInner = L.foldl' f [] graph_nodes
+addMiniEdges :: [Node] -> (Float -> Cost) -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> FloorDirectedEdges
+addMiniEdges nodes costFunc toOuter toInner = L.foldl' f [] nodes
     where
-        f cur (n,info) = 
+        f cur n = 
             let outer = toOuter A.! n in
             let inner = toInner A.! n in
             L.foldl' (g inner) cur outer
@@ -55,17 +55,6 @@ createGraph nodes directedEdges =
 --    let directedEdges = convertDirectedEdges unDirectedEdges in
     mkGraph nodes directedEdges
 
-cuttingEdge :: FloorDirectedEdges -> PointsOfBlock -> FloorDirectedEdges
-cuttingEdge de poe = S.foldl' f de poe
-    where
-        f :: FloorDirectedEdges -> Node -> FloorDirectedEdges
-        f cur n = 
-            if inRange (1,15) n then
-                let outer = S.fromList $ L.map fst $ nodeToOuterMiniNode A.! n in
-                let inner = S.fromList $ L.map fst $ nodeToInnerMiniNode A.! n in
-                L.filter (\(s,e,_) -> not ((S.member s inner)&&(S.member e outer))) cur
-            else cur
-    
 searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
     case (sp startPoint endPoint g, spLength startPoint endPoint g) of
@@ -74,10 +63,9 @@ searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
 
 goto :: [Node] -> (Float -> Cost) -> StartPoint -> EndPoint -> Maybe (Path,Cost)
 goto poe costFunc startPoint endPoint = 
-    let miniEdges = addMiniEdges costFunc nodeToOuterMiniNode nodeToInnerMiniNode in
-    let noblock_miniEdges = cuttingEdge miniEdges (S.fromList poe) in
+    let miniEdges = addMiniEdges (L.filter (\n -> L.notElem n poe) [1..18])costFunc nodeToOuterMiniNode nodeToInnerMiniNode in
     let parentEdges = addParentEdges nodeToOuterMiniNode nodeToInnerMiniNode startPoint endPoint in
-    let g = createGraph nodesWithMiniNodes (parentEdges++noblock_miniEdges++edgesHavingMiniNodes) in
+    let g = createGraph nodesWithMiniNodes (parentEdges++miniEdges++edgesHavingMiniNodes) in
     searchShortPath startPoint endPoint g
 
 getColorNode :: FloorNodes -> BlockColor -> Path
