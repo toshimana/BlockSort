@@ -1,4 +1,4 @@
-module GraphConstants (Vec,NodeInfo(..), Cost(..), FloorNodes, FloorUnDirectedEdges, FloorDirectedEdges, floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges, calcDepartCostFromAngle, calcReturnCostFromAngle, createRotateBaseEdges, nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode, innerToOuter) where
+module GraphConstants (Vec,NodeInfo(..), Cost(..), Angle(..), FloorNodes, FloorUnDirectedEdges, FloorDirectedEdges, floor_nodes, node_color_map, node_position_map, graph_nodes, graph_edges_with_center, graph_edges, edge_cost_map, graph_middle_edges, calcDepartCostFromAngle, calcReturnCostFromAngle, createRotateBaseEdges, nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode, innerToOuter) where
  
 import Data.Array as A
 import Data.List as L
@@ -14,6 +14,8 @@ import BlockColor
 type Point = V2 Float
 type Vec = V2 Float
 newtype NodeInfo = NodeInfo (BlockColor, Point) deriving (Eq,Show)
+newtype Angle = Angle Float
+
 newtype Cost = Cost Float deriving (Ord,Eq,Show)
 
 instance Num Cost where
@@ -37,11 +39,11 @@ type FloorNodes = [LNode NodeInfo]
 type FloorUnDirectedEdges = [LEdge Cost]
 type FloorDirectedEdges = [LEdge Cost]
 
-calcDepartCostFromAngle :: Float -> Cost
-calcDepartCostFromAngle angle = Cost $ 1.0 * angle / pi
+calcDepartCostFromAngle :: Angle -> Cost
+calcDepartCostFromAngle (Angle angle) = Cost $ 1.0 * angle / pi
 
-calcReturnCostFromAngle :: Float -> Cost
-calcReturnCostFromAngle angle = Cost $ 4.0 * angle * angle / (pi * pi)
+calcReturnCostFromAngle :: Angle -> Cost
+calcReturnCostFromAngle (Angle angle) = Cost $ 4.0 * angle * angle / (pi * pi)
 
 floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]

@@ -24,14 +24,10 @@ type PointsOfBlock = Set Node
 newtype StartPoint = StartPoint Node
 newtype EndPoint = EndPoint Node
 
-convertDirectedEdges :: FloorUnDirectedEdges -> FloorDirectedEdges
-convertDirectedEdges edges =
-    concat [[(i,j,k),(j,i,k)] | (i,j,k) <- edges]
+calcAngle :: Vec -> Vec -> Angle
+calcAngle a b = let ret = acos (dot a b / ((norm a) * (norm b))) in Angle (if isNaN ret then 1.0 else ret)
 
-calcAngle :: Vec -> Vec -> Float
-calcAngle a b = let ret = acos (dot a b / ((norm a) * (norm b))) in if isNaN ret then 1.0 else ret
-
-addMiniEdges :: [Node] -> (Float -> Cost) -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> FloorDirectedEdges
+addMiniEdges :: [Node] -> (Angle -> Cost) -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> FloorDirectedEdges
 addMiniEdges nodes costFunc toOuter toInner = L.foldl' f [] nodes
     where
         f cur n = 
@@ -51,9 +47,7 @@ refinePath :: Map Node Node -> Path -> Path
 refinePath toParentNode p = L.map head $ group $ L.map (\n -> fromMaybe n (M.lookup n toParentNode)) p
 
 createGraph :: FloorNodes -> FloorDirectedEdges -> BlockGraph
-createGraph nodes directedEdges =
---    let directedEdges = convertDirectedEdges unDirectedEdges in
-    mkGraph nodes directedEdges
+createGraph nodes directedEdges = mkGraph nodes directedEdges
 
 searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
@@ -61,7 +55,7 @@ searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
         (Just path, Just cost) -> Just (path, cost)
         (_, _) -> Nothing
 
-goto :: [Node] -> (Float -> Cost) -> StartPoint -> EndPoint -> Maybe (Path,Cost)
+goto :: [Node] -> (Angle -> Cost) -> StartPoint -> EndPoint -> Maybe (Path,Cost)
 goto poe costFunc startPoint endPoint = 
     let miniEdges = addMiniEdges (L.filter (\n -> L.notElem n poe) [1..18])costFunc nodeToOuterMiniNode nodeToInnerMiniNode in
     let parentEdges = addParentEdges nodeToOuterMiniNode nodeToInnerMiniNode startPoint endPoint in
@@ -104,7 +98,7 @@ findEscapeNode bp cl tlist bc departRoot departCost s e endPoint =
                     let currentRoot = init moveRoot in
                     let backNode = last currentRoot in
                     let turnNode = innerToOuter M.! backNode in
-                    let currentCost = moveCost + (calcDepartCostFromAngle pi) in
+                    let currentCost = moveCost + (calcDepartCostFromAngle (Angle pi)) in
                     let restSolve = solveTarget (bp // [(bc,escapeNode)]) (bc:cl) [target] (StartPoint turnNode) endPoint in
                     B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentCost + cost, newbp)) restSolve
             else []
@@ -123,7 +117,7 @@ searchReturnRoot bp cl tlist bc departRoot departCost s e endPoint =
             let currentRoot = init moveRoot in
             let backNode = last currentRoot in
             let turnNode = innerToOuter M.! backNode in
-            let currentCost = moveCost + (calcDepartCostFromAngle pi) in
+            let currentCost = moveCost + (calcDepartCostFromAngle (Angle pi)) in
             let nextTargets = searchNextTarget bp cl tlist bc e turnNode endPoint in
             B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentCost + cost, newbp)) nextTargets
 
@@ -192,7 +186,7 @@ isBlockConstraint xs = False
 
 isTargetFigure :: BlockPosition -> Bool
 isTargetFigure a = (not (isCenterBlockBonus a)) && ((isDepressionSquareBonus a) || (isSquareBonus a) || (isPentagonBonus a))
---isTargetFigure a = isPentagonBonus a
+
 
 targetList :: BlockPosition -> [BlockPosition]
 targetList bp = let l = L.filter isTargetFigure blockArrayRaw in
