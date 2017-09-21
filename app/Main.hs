@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Concurrent.Async
 import Data.List as L
 import Data.Array as A
 import Data.Map as M
@@ -45,15 +46,15 @@ generateRootCSVLine f sp ep bp =
 greenBlocks :: [Node]
 greenBlocks = L.filter (\n -> node_color_map M.! n /= Green) [1..15]
 
-
+writeAllbin :: Node -> IO ()
 writeAllbin id = let file = printf "root%02d.bin" id in encodeFile file $ createBinary id 100
 
 main :: IO ()
 main = do
 --    writeFile "result.csv" $ printCSV $ L.map (generateRootCSVLine calcTargetRoot (StartPoint 10) (EndPoint 11)) blockArray
-    print $ createBinary 9 (Cost 100.0)
+--    print $ createBinary 9 (Cost 100.0)
 --    encodeFile "root.bin" $ createBinary 9 (Cost 100.0)
---    mapM_ writeAllbin greenBlocks
+    mapConcurrently_ writeAllbin greenBlocks
 --    print $ calcTargetRoot 10 11 $ blockArray !! 2
 --    writeFile "answer.csv" $ printCSV answerListCSV
 --    print $ L.map length $ groupBy (\(_:l:_)-> \(_:r:_)-> l==r) $ sortBy (\(_:l:_)-> \(_:r:_)-> compare l r) blockList
