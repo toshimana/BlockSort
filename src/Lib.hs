@@ -5,7 +5,6 @@ import Data.Map as M
 import Data.Set as S
 import Data.List as L
 import Data.Maybe as B
-import Linear.Metric
 import Data.Word
 import Data.Graph.Inductive.PatriciaTree
 import Data.Graph.Inductive.Graph
@@ -15,40 +14,13 @@ import BlockColor
 import BinaryData
 import InitCode
 import BonusPoint
+import Graph
 import GraphConstants
 import Cost
 
-type BlockGraph = Gr NodeInfo Cost
-
 type PointsOfBlock = Set Node
 
-newtype StartPoint = StartPoint Node
-newtype EndPoint = EndPoint Node
 
-calcAngle :: Vec -> Vec -> Angle
-calcAngle a b = let ret = acos (dot a b / ((norm a) * (norm b))) in Angle (if isNaN ret then 1.0 else ret)
-
-addMiniEdges :: [Node] -> (Angle -> Cost) -> ParentToOuter -> ParentToInner -> FloorDirectedEdges
-addMiniEdges nodes costFunc toOuter toInner = L.foldl' f [] nodes
-    where
-        f cur n = 
-            let outer = getOuter toOuter n in
-            let inner = getInner toInner n in
-            L.foldl' (g inner) cur outer
-        g inner cur (on,NodeInfo(obc,ov)) =
-            L.foldl' (\cur_ -> \(inn,NodeInfo(ibc,iv)) -> let c = costFunc (calcAngle iv ov) in (inn,on,c):cur_) cur inner
-            
-addParentEdges :: ParentToOuter -> ParentToInner -> StartPoint -> EndPoint -> FloorDirectedEdges
-addParentEdges toOuter toInner (StartPoint s) (EndPoint e) =
-    let outer = getOuter toOuter s in
-    let inner = getInner toInner e in
-    L.foldl' (\cur -> \(inn,_) -> (inn,e,Cost 0.0):cur) (L.foldl' (\cur -> \(on,_) -> (s,on,Cost 0.0):cur) [] outer) inner
-
-refinePath :: ChildToParent -> Path -> Path
-refinePath childToParent p = L.map head $ group $ L.map (toParent childToParent) p
-
-createGraph :: FloorNodes -> FloorDirectedEdges -> BlockGraph
-createGraph nodes directedEdges = mkGraph nodes directedEdges
 
 searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
 searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
