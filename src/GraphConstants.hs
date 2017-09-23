@@ -17,6 +17,9 @@ type Point = V2 Float
 type Vec = V2 Float
 newtype NodeInfo = NodeInfo (BlockColor, Point) deriving (Eq,Show)
 
+newtype StartPoint = StartPoint Node
+newtype EndPoint = EndPoint Node
+
 type FloorNodes = [LNode NodeInfo]
 type FloorUnDirectedEdges = [LEdge Cost]
 type FloorDirectedEdges = [LEdge Cost]

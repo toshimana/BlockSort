@@ -18,4 +18,7 @@ instance Binary BinaryData where
 
     get = do
         ms <- mapM (\idx -> mapM (\_ -> getWord8) [1..256] >>= return.(\n->(InitCode idx,takeWhile (/= 0) n))) [0..15*11*11*11-1] 
-        return $ BinaryData (array (InitCode 0,InitCode (15*11*11*11-1)) ms)
+        return $ createBinaryData ms
+
+createBinaryData :: [(InitCode,[Word8])] -> BinaryData
+createBinaryData xs = BinaryData $ array (minBound, maxBound) xs

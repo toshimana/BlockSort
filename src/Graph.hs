@@ -12,9 +12,6 @@ import Linear.Metric
 import Cost
 import GraphConstants
 
-newtype StartPoint = StartPoint Node
-newtype EndPoint = EndPoint Node
-
 type BlockGraph = Gr NodeInfo Cost
 
 newtype ParentToOuter = ParentToOuter (Array Node [LNode NodeInfo])
