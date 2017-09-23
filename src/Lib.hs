@@ -6,9 +6,8 @@ import Data.Set as S
 import Data.List as L
 import Data.Maybe as B
 import Data.Word
-import Data.Graph.Inductive.PatriciaTree
+import Data.Graph.Inductive.Tree
 import Data.Graph.Inductive.Graph
-import Data.Graph.Inductive.Query.SP
 
 import BlockColor
 import BinaryData
@@ -19,14 +18,6 @@ import GraphConstants
 import Cost
 
 type PointsOfBlock = Set Node
-
-
-
-searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
-searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
-    case (sp startPoint endPoint g, spLength startPoint endPoint g) of
-        (Just path, Just cost) -> Just (path, cost)
-        (_, _) -> Nothing
 
 goto :: [Node] -> (Angle -> Cost) -> StartPoint -> EndPoint -> Maybe (Path,Cost)
 goto poe costFunc startPoint endPoint = 

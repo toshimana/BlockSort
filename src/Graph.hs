@@ -6,6 +6,7 @@ import Data.Map as M
 import Data.Maybe
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Tree
+import Data.Graph.Inductive.Query.SP
 import Linear.Metric
 
 import Cost
@@ -84,3 +85,9 @@ createRotateBaseEdges_ (fn,fde,toOuter,toInner,toParent,innerToOuter,id) e@(n1,n
     (mn1:mn2:mn3:mn4:fn,(id1,id4,c):(id3,id2,c):fde,(n1,mn1):(n2,mn3):toOuter,(n1,mn2):(n2,mn4):toInner,(id1,n1):(id2,n1):(id3,n2):(id4,n2):toParent,(id4,id3):(id2,id1):innerToOuter,id+4)
 
 (nodesWithMiniNodes,edgesHavingMiniNodes,nodeToOuterMiniNode,nodeToInnerMiniNode,miniNodeToParentNode,innerToOuter, sizeOfNodes) = createRotateBaseEdges graph_nodes graph_edges
+
+searchShortPath :: StartPoint -> EndPoint -> BlockGraph -> Maybe (Path, Cost)
+searchShortPath (StartPoint startPoint) (EndPoint endPoint) g =
+    case (sp startPoint endPoint g, spLength startPoint endPoint g) of
+        (Just path, Just cost) -> Just (path, cost)
+        (_, _) -> Nothing
