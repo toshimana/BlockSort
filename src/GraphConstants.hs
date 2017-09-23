@@ -11,13 +11,11 @@ import Data.Graph.Inductive.Graph
 import Linear
 
 import BlockColor
+import Cost
 
 type Point = V2 Float
 type Vec = V2 Float
 newtype NodeInfo = NodeInfo (BlockColor, Point) deriving (Eq,Show)
-newtype Angle = Angle Float
-
-newtype Cost = Cost Float deriving (Ord,Eq,Show)
 
 newtype ParentToOuter = ParentToOuter (Array Node [LNode NodeInfo])
 newtype ParentToInner = ParentToInner (Array Node [LNode NodeInfo])
@@ -38,32 +36,9 @@ newtype InnerToOuter = InnerToOuter (Map Node Node) deriving (Show,Eq)
 findOuterFromInner :: InnerToOuter -> Node -> Node
 findOuterFromInner (InnerToOuter ito) n = ito M.! n
 
-instance Num Cost where
-    (+) (Cost a) (Cost b) = Cost (a+b)
-    (-) (Cost a) (Cost b) = Cost (a-b)
-    (*) (Cost a) (Cost b) = Cost (a*b)
-    negate (Cost a) = Cost (negate a)
-    abs (Cost a) = Cost (abs a)
-    signum (Cost a) = Cost (signum a)
-    fromInteger a = Cost (fromInteger a)
-
-instance Real Cost where
-    toRational (Cost a) = toRational a
-
-instance Fractional Cost where
-    (/) (Cost a) (Cost b) = Cost (a/b)
-    recip (Cost a) = Cost (recip a)
-    fromRational a = Cost (fromRational a)
-
 type FloorNodes = [LNode NodeInfo]
 type FloorUnDirectedEdges = [LEdge Cost]
 type FloorDirectedEdges = [LEdge Cost]
-
-calcDepartCostFromAngle :: Angle -> Cost
-calcDepartCostFromAngle (Angle angle) = Cost $ 1.0 * angle / pi
-
-calcReturnCostFromAngle :: Angle -> Cost
-calcReturnCostFromAngle (Angle angle) = Cost $ 4.0 * angle * angle / (pi * pi)
 
 floor_nodes :: Set Node
 floor_nodes = S.fromList [1..15]

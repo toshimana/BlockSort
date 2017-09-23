@@ -16,6 +16,7 @@ import BlockColor
 import BinaryData
 import BonusPoint
 import GraphConstants
+import Cost
 
 answerListCSV :: [[String]]
 answerListCSV = L.map f answerList

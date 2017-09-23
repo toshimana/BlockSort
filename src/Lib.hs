@@ -16,6 +16,7 @@ import BinaryData
 import InitCode
 import BonusPoint
 import GraphConstants
+import Cost
 
 type BlockGraph = Gr NodeInfo Cost
 

@@ -12,6 +12,7 @@ import BlockColor
 import InitCode
 import GraphConstants
 import BonusPoint
+import Cost
 
 spec :: Spec
 spec = do

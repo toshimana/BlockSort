@@ -21,6 +21,7 @@ library
                      , InitCode
                      , GraphConstants
                      , BonusPoint
+                     , Cost
   build-depends:       base >= 4.7 && < 5
                      , binary
                      , containers
