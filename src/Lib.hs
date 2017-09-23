@@ -27,20 +27,20 @@ newtype EndPoint = EndPoint Node
 calcAngle :: Vec -> Vec -> Angle
 calcAngle a b = let ret = acos (dot a b / ((norm a) * (norm b))) in Angle (if isNaN ret then 1.0 else ret)
 
-addMiniEdges :: [Node] -> (Angle -> Cost) -> Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> FloorDirectedEdges
+addMiniEdges :: [Node] -> (Angle -> Cost) -> ParentToOuter -> ParentToInner -> FloorDirectedEdges
 addMiniEdges nodes costFunc toOuter toInner = L.foldl' f [] nodes
     where
         f cur n = 
-            let outer = toOuter A.! n in
-            let inner = toInner A.! n in
+            let outer = getOuter toOuter n in
+            let inner = getInner toInner n in
             L.foldl' (g inner) cur outer
         g inner cur (on,NodeInfo(obc,ov)) =
             L.foldl' (\cur_ -> \(inn,NodeInfo(ibc,iv)) -> let c = costFunc (calcAngle iv ov) in (inn,on,c):cur_) cur inner
             
-addParentEdges :: Array Node [LNode NodeInfo] -> Array Node [LNode NodeInfo] -> StartPoint -> EndPoint -> FloorDirectedEdges
+addParentEdges :: ParentToOuter -> ParentToInner -> StartPoint -> EndPoint -> FloorDirectedEdges
 addParentEdges toOuter toInner (StartPoint s) (EndPoint e) =
-    let outer = toOuter A.! s in
-    let inner = toInner A.! e in
+    let outer = getOuter toOuter s in
+    let inner = getInner toInner e in
     L.foldl' (\cur -> \(inn,_) -> (inn,e,Cost 0.0):cur) (L.foldl' (\cur -> \(on,_) -> (s,on,Cost 0.0):cur) [] outer) inner
 
 refinePath :: Map Node Node -> Path -> Path
