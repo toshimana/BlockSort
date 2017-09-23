@@ -33,6 +33,11 @@ newtype ChildToParent = ChildToParent (Map Node Node) deriving (Show,Eq)
 toParent :: ChildToParent -> Node -> Node
 toParent (ChildToParent toParent) n = fromMaybe n (M.lookup n toParent)
 
+newtype InnerToOuter = InnerToOuter (Map Node Node) deriving (Show,Eq)
+
+findOuterFromInner :: InnerToOuter -> Node -> Node
+findOuterFromInner (InnerToOuter ito) n = ito M.! n
+
 instance Num Cost where
     (+) (Cost a) (Cost b) = Cost (a+b)
     (-) (Cost a) (Cost b) = Cost (a-b)
@@ -207,10 +212,10 @@ createMapArray id list = runSTArray $ do
             writeArray ar n (ni:l)
             f ar xs
 
-createRotateBaseEdges :: FloorNodes -> FloorUnDirectedEdges -> (FloorNodes,FloorDirectedEdges,ParentToOuter,ParentToInner,ChildToParent,Map Node Node,Node)
+createRotateBaseEdges :: FloorNodes -> FloorUnDirectedEdges -> (FloorNodes,FloorDirectedEdges,ParentToOuter,ParentToInner,ChildToParent,InnerToOuter,Node)
 createRotateBaseEdges nodes ude = 
     let (fn,fde,toOuterList,toInnerList,toParentList,innerToOuter,id) = L.foldl' createRotateBaseEdges_ (nodes,[],[],[],[],[],length nodes) ude in
-    (fn,fde,ParentToOuter (createMapArray id toOuterList),ParentToInner (createMapArray id toInnerList), ChildToParent (M.fromList toParentList), M.fromList innerToOuter, id)
+    (fn,fde,ParentToOuter (createMapArray id toOuterList),ParentToInner (createMapArray id toInnerList), ChildToParent (M.fromList toParentList), InnerToOuter (M.fromList innerToOuter), id)
 
 createRotateBaseEdges_ :: (FloorNodes,FloorDirectedEdges,[(Node,LNode NodeInfo)],[(Node,LNode NodeInfo)],[(Node,Node)],[(Node,Node)],Node) -> LEdge Cost -> (FloorNodes,FloorDirectedEdges,[(Node,LNode NodeInfo)],[(Node,LNode NodeInfo)],[(Node,Node)],[(Node,Node)],Node)
 createRotateBaseEdges_ (fn,fde,toOuter,toInner,toParent,innerToOuter,id) e@(n1,n2,c) = 

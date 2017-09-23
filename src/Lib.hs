@@ -97,7 +97,7 @@ findEscapeNode bp cl tlist bc departRoot departCost s e endPoint =
                     let escapeNode = last moveRoot in
                     let currentRoot = init moveRoot in
                     let backNode = last currentRoot in
-                    let turnNode = innerToOuter M.! backNode in
+                    let turnNode = findOuterFromInner innerToOuter backNode in
                     let currentCost = moveCost + (calcDepartCostFromAngle (Angle pi)) in
                     let restSolve = solveTarget (bp // [(bc,escapeNode)]) (bc:cl) [target] (StartPoint turnNode) endPoint in
                     B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentCost + cost, newbp)) restSolve
@@ -116,7 +116,7 @@ searchReturnRoot bp cl tlist bc departRoot departCost s e endPoint =
             let moveCost = departCost + returnCost in
             let currentRoot = init moveRoot in
             let backNode = last currentRoot in
-            let turnNode = innerToOuter M.! backNode in
+            let turnNode = findOuterFromInner innerToOuter backNode in
             let currentCost = moveCost + (calcDepartCostFromAngle (Angle pi)) in
             let nextTargets = searchNextTarget bp cl tlist bc e turnNode endPoint in
             B.mapMaybe (\(path,cost,newbp) -> if L.null path then Nothing else Just (currentRoot ++ path, currentCost + cost, newbp)) nextTargets
