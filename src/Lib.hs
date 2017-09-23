@@ -43,8 +43,8 @@ addParentEdges toOuter toInner (StartPoint s) (EndPoint e) =
     let inner = getInner toInner e in
     L.foldl' (\cur -> \(inn,_) -> (inn,e,Cost 0.0):cur) (L.foldl' (\cur -> \(on,_) -> (s,on,Cost 0.0):cur) [] outer) inner
 
-refinePath :: Map Node Node -> Path -> Path
-refinePath toParentNode p = L.map head $ group $ L.map (\n -> fromMaybe n (M.lookup n toParentNode)) p
+refinePath :: ChildToParent -> Path -> Path
+refinePath childToParent p = L.map head $ group $ L.map (toParent childToParent) p
 
 createGraph :: FloorNodes -> FloorDirectedEdges -> BlockGraph
 createGraph nodes directedEdges = mkGraph nodes directedEdges

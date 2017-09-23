@@ -4,6 +4,7 @@ import Data.Array as A
 import Data.List as L
 import Data.Map as M
 import Data.Set as S
+import Data.Maybe
 import Control.Monad.ST
 import Data.Array.ST
 import Data.Graph.Inductive.Graph
@@ -26,6 +27,11 @@ getOuter (ParentToOuter outer) n = outer A.! n
 
 getInner :: ParentToInner -> Node -> [LNode NodeInfo]
 getInner (ParentToInner inner) n = inner A.! n
+
+newtype ChildToParent = ChildToParent (Map Node Node) deriving (Show,Eq)
+
+toParent :: ChildToParent -> Node -> Node
+toParent (ChildToParent toParent) n = fromMaybe n (M.lookup n toParent)
 
 instance Num Cost where
     (+) (Cost a) (Cost b) = Cost (a+b)
@@ -201,10 +207,10 @@ createMapArray id list = runSTArray $ do
             writeArray ar n (ni:l)
             f ar xs
 
-createRotateBaseEdges :: FloorNodes -> FloorUnDirectedEdges -> (FloorNodes,FloorDirectedEdges,ParentToOuter,ParentToInner,Map Node Node,Map Node Node,Node)
+createRotateBaseEdges :: FloorNodes -> FloorUnDirectedEdges -> (FloorNodes,FloorDirectedEdges,ParentToOuter,ParentToInner,ChildToParent,Map Node Node,Node)
 createRotateBaseEdges nodes ude = 
     let (fn,fde,toOuterList,toInnerList,toParentList,innerToOuter,id) = L.foldl' createRotateBaseEdges_ (nodes,[],[],[],[],[],length nodes) ude in
-    (fn,fde,ParentToOuter (createMapArray id toOuterList),ParentToInner (createMapArray id toInnerList), M.fromList toParentList, M.fromList innerToOuter, id)
+    (fn,fde,ParentToOuter (createMapArray id toOuterList),ParentToInner (createMapArray id toInnerList), ChildToParent (M.fromList toParentList), M.fromList innerToOuter, id)
 
 createRotateBaseEdges_ :: (FloorNodes,FloorDirectedEdges,[(Node,LNode NodeInfo)],[(Node,LNode NodeInfo)],[(Node,Node)],[(Node,Node)],Node) -> LEdge Cost -> (FloorNodes,FloorDirectedEdges,[(Node,LNode NodeInfo)],[(Node,LNode NodeInfo)],[(Node,Node)],[(Node,Node)],Node)
 createRotateBaseEdges_ (fn,fde,toOuter,toInner,toParent,innerToOuter,id) e@(n1,n2,c) = 
