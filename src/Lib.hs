@@ -1,4 +1,4 @@
-module Lib (StartPoint(..), EndPoint(..), processBlockTarget, addMiniEdges, addParentEdges, goto, createGraph, searchShortPath, solveTarget, calcOptimizedRootTarget, answerList, calcTargetRoot, createBinary, blockArray, isDeadLock, createRootFromCode, targetList) where
+module Lib where
 
 import qualified Data.List as L
 import qualified Data.Set as S
@@ -57,19 +57,11 @@ targetList bp = let l = L.filter isTargetFigure blockArrayRaw in
     let blockPlaceFilterList = L.filter (\n -> let ns = A.elems n in S.size (S.fromList ns) == 5) replaceList in
     S.toList $ S.fromList blockPlaceFilterList
 
-calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [(BonusPoint,Cost,Path,BlockPosition)]
-calcTargetRoot sp ep bp = f (targetList bp)
-    where 
-        f :: [BlockPosition] -> [(BonusPoint,Cost,Path,BlockPosition)]
-        f tlist = 
-            let ans = solveTarget bp [Red .. Black] tlist sp ep in
-            L.map (\(p,c,bp) -> (calcBonusPoint graph_nodes bp,c,init (tail (refinePath miniNodeToParentNode p)),bp)) ans
-
 createRootFromCode :: Node -> Cost -> InitCode -> [Word8]
 createRootFromCode gp cost code = 
     let bp = fromInitCode gp code in 
     if isInitBlockPosition bp 
-    then g cost (calcTargetRoot (StartPoint 17) (EndPoint 18) bp) 
+    then g cost (calcTargetRoot (StartPoint 17) (EndPoint 18) bp (targetList bp)) 
     else []
         where
             g :: Cost -> [(BonusPoint,Cost,Path,BlockPosition)] -> [Word8]

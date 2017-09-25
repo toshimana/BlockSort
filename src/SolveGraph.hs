@@ -6,6 +6,7 @@ import qualified Data.Set as S
 import qualified Data.Maybe as B
 
 import BlockColor
+import BonusPoint
 import Graph
 import Cost
 import Data.Graph.Inductive.Graph
@@ -104,4 +105,8 @@ solveTarget bp unprocessBlocks tlist startPoint endPoint =
             let nodes = S.toList $ S.fromList $ L.map (\t -> t A.! color) tlist in
             let restColors = L.delete color unprocessBlocks in
             concatMap (\n -> let newtlist = L.filter (\t -> (t A.! color) == n) tlist in processBlockTarget bp restColors newtlist color n startPoint endPoint) nodes
-    
+
+calcTargetRoot :: StartPoint -> EndPoint -> BlockPosition -> [BlockPosition] -> [(BonusPoint,Cost,Path,BlockPosition)]
+calcTargetRoot sp ep bp tlist = 
+    let ans = solveTarget bp [Red .. Black] tlist sp ep in
+    L.map (\(p,c,bp) -> (calcBonusPoint graph_nodes bp,c,init (tail (refinePath miniNodeToParentNode p)),bp)) ans
